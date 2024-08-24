@@ -22,8 +22,8 @@ void Data::DataInstance::prepareStreams()
     
     for (int iterNodeId = 0; iterNodeId < NUM_NODES; iterNodeId++)
     {
-        Data::Node* node = &nodes[iterNodeId];
-        if (!node->isActive) break;
+        Data::Node* node = nodes[iterNodeId];
+        if (node == nullptr || !node->isActive) break;
         
         paramId = 0;
         
@@ -112,6 +112,8 @@ void Data::DataInstance::prepare()
 
 void Data::DataInstance::evaluate(int streamId, ParameterType type)
 {
+    if (streamId == -1) return;
+    
     if (type == ParameterType::Audio)
     {
         evaluate(audioStreams[streamId].inputNodeId);
@@ -124,11 +126,13 @@ void Data::DataInstance::evaluate(int streamId, ParameterType type)
 
 void Data::DataInstance::evaluate(int nodeId)
 {
-    Data::Node* node = &nodes[nodeId];
+    if (nodeId == -1) return;
+    
+    Data::Node* node = nodes[nodeId];
     
     for (int i = 0; i < NUM_PARAMS; i++)
     {
-        if (node->type == NodeType::MainInput) break;
+        if (node->getType() == NodeType::MainInput) break;
         
         if (!node->inputParams[i].isActive) break;
         
@@ -140,7 +144,7 @@ void Data::DataInstance::evaluate(int nodeId)
     
     // then evaluate internal node logic
     
-    switch (node->type) {
+    switch (node->getType()) {
         case NodeType::MainInput:
         {
             for (int outputIdId = 0; outputIdId < 8; outputIdId++)
@@ -306,7 +310,7 @@ void Data::DataInstance::evaluate(int nodeId)
 
 void Data::DataInstance::evaluate()
 {
-    int finalStreamId = nodes[1].inputParams[0].streamId;
+    int finalStreamId = nodes[1]->inputParams[0].streamId;
     
     if (finalStreamId != -1)
         evaluate(finalStreamId, ParameterType::Audio);
@@ -316,7 +320,7 @@ int Data::DataInstance::getNextNodeId()
 {
     for (int i = 0; i < NUM_NODES; i++)
     {
-        if (nodes[i].isActive == false) return i;
+        if (nodes[i] == nullptr || !nodes[i]->isActive) return i;
     }
     return -1;
 }
@@ -365,15 +369,18 @@ void DataManager::addNode(int index, NodeType type, juce::String name, juce::Poi
 
 void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type, juce::String name, juce::Point<float> position)
 {
-    auto node = &instance->nodes[index];
-    node->isActive = true;
-    node->position = position;
-    node->friendlyName = name;
-    node->type = type;
+    
+    //TODO: change whole thing
+//    auto node = instance->nodes[index];
+
+    
+    Data::Node* node;
     
     switch (type) // pre-init streams
     {
         case NodeType::MainInput:
+            node = new Data::MainInputNode();
+            
             node->isGlobalLockedNode = true;
             node->hasInputSide = false;
             
@@ -382,47 +389,26 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
             node->outputParams[0].type = ParameterType::Audio;
             break;
         case NodeType::MainOutput:
-            node->isGlobalLockedNode = true;
-            node->hasOutputSide = false;
-            
-            node->inputParams[0].isActive = true;
-            node->inputParams[0].friendlyName = "Out";
-            node->inputParams[0].type = ParameterType::Audio;
+            node = new Data::MainOutputNode();
             break;
         case NodeType::Gain:
-            node->inputParams[0].isActive = true;
-            node->inputParams[0].friendlyName = "In";
-            node->inputParams[0].type = ParameterType::Audio;
-            
-            node->inputParams[1].isActive = true;
-            node->inputParams[1].friendlyName = "Gain";
-            node->inputParams[1].type = ParameterType::Value;
-            
-            node->outputParams[0].isActive = true;
-            node->outputParams[0].friendlyName = "Out";
-            node->outputParams[0].type = ParameterType::Audio;
+            node = new Data::GainNode();
             break;
         case NodeType::Level:
-            node->inputParams[0].isActive = true;
-            node->inputParams[0].friendlyName = "In";
-            node->inputParams[0].type = ParameterType::Audio;
-            
-            node->outputParams[0].isActive = true;
-            node->outputParams[0].friendlyName = "Float";
-            node->outputParams[0].type = ParameterType::Value;
-            
-            node->outputParams[1].isActive = true;
-            node->outputParams[1].friendlyName = "dbFS";
-            node->outputParams[1].type = ParameterType::Value;
+            node = new Data::LevelNode();
             break;
         case NodeType::Correlation:
-            node->inputParams[0].isActive = true;
-            node->inputParams[0].friendlyName = "In";
-            node->inputParams[0].type = ParameterType::Audio;
-            
-            node->outputParams[0].isActive = true;
-            node->outputParams[0].friendlyName = "Correlation";
-            node->outputParams[0].type = ParameterType::Value;
+            node  = new Data::CorrelationNode();
+            break;
+    }
+    
+    if (node != nullptr)
+    {
+        node->isActive = true;
+        node->position = position;
+        node->friendlyName = name;
+        
+        instance->nodes[index] = node;
     }
 }
 
@@ -442,38 +428,39 @@ void DataManager::removeStream(Data::DataInstance* instance, ParameterType type,
 //    
     for (int nodeId = 0; nodeId < NUM_NODES; nodeId++)
     {
+        if (instance->nodes[nodeId] == nullptr) break;
         for (int inputParamId = 0; inputParamId < NUM_PARAMS; inputParamId++)
         {
-            if (!instance->nodes[nodeId].inputParams[inputParamId].isActive) break;
-            if (instance->nodes[nodeId].inputParams[inputParamId].type != type) continue;
+            if (!instance->nodes[nodeId]->inputParams[inputParamId].isActive) break;
+            if (instance->nodes[nodeId]->inputParams[inputParamId].type != type) continue;
             
-            if (instance->nodes[nodeId].inputParams[inputParamId].streamId == streamId)
-                instance->nodes[nodeId].inputParams[inputParamId].streamId = -1;
-            else if (instance->nodes[nodeId].inputParams[inputParamId].streamId > streamId)
-                instance->nodes[nodeId].inputParams[inputParamId].streamId -= 1;
+            if (instance->nodes[nodeId]->inputParams[inputParamId].streamId == streamId)
+                instance->nodes[nodeId]->inputParams[inputParamId].streamId = -1;
+            else if (instance->nodes[nodeId]->inputParams[inputParamId].streamId > streamId)
+                instance->nodes[nodeId]->inputParams[inputParamId].streamId -= 1;
         }
         
         for (int outputParamId = 0; outputParamId < NUM_PARAMS; outputParamId++)
         {
-            if (!instance->nodes[nodeId].outputParams[outputParamId].isActive) break;
-            if (instance->nodes[nodeId].outputParams[outputParamId].type != type) continue;
+            if (!instance->nodes[nodeId]->outputParams[outputParamId].isActive) break;
+            if (instance->nodes[nodeId]->outputParams[outputParamId].type != type) continue;
             
             for (int readPtr = 0, writePtr = 0; writePtr < 8; readPtr++)
             {
                 if (readPtr >= 8)
                 {
-                    instance->nodes[nodeId].outputParams[outputParamId].streamIds[writePtr] = -1;
+                    instance->nodes[nodeId]->outputParams[outputParamId].streamIds[writePtr] = -1;
                     writePtr++;
                     continue;
                 }
                 
-                if (instance->nodes[nodeId].outputParams[outputParamId].streamIds[readPtr] == streamId)
+                if (instance->nodes[nodeId]->outputParams[outputParamId].streamIds[readPtr] == streamId)
                     continue;
                 
-                if (instance->nodes[nodeId].outputParams[outputParamId].streamIds[readPtr] > streamId)
-                    instance->nodes[nodeId].outputParams[outputParamId].streamIds[writePtr] = instance->nodes[nodeId].outputParams[outputParamId].streamIds[readPtr] - 1;
+                if (instance->nodes[nodeId]->outputParams[outputParamId].streamIds[readPtr] > streamId)
+                    instance->nodes[nodeId]->outputParams[outputParamId].streamIds[writePtr] = instance->nodes[nodeId]->outputParams[outputParamId].streamIds[readPtr] - 1;
                 else
-                    instance->nodes[nodeId].outputParams[outputParamId].streamIds[writePtr] = instance->nodes[nodeId].outputParams[outputParamId].streamIds[readPtr];
+                    instance->nodes[nodeId]->outputParams[outputParamId].streamIds[writePtr] = instance->nodes[nodeId]->outputParams[outputParamId].streamIds[readPtr];
                 
                 writePtr++;
             }
@@ -521,31 +508,32 @@ void DataManager::removeNode(Data::DataInstance *instance, int nodeId)
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!instance->nodes[nodeId].inputParams[paramId].isActive) break;
+        if (!instance->nodes[nodeId]->inputParams[paramId].isActive) break;
         
-        int streamId = instance->nodes[nodeId].inputParams[paramId].streamId;
+        int streamId = instance->nodes[nodeId]->inputParams[paramId].streamId;
         if (streamId == -1) continue;
         
-        removeStream(instance->nodes[nodeId].inputParams[paramId].type, streamId);
+        removeStream(instance->nodes[nodeId]->inputParams[paramId].type, streamId);
     }
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!instance->nodes[nodeId].outputParams[paramId].isActive) break;
+        if (!instance->nodes[nodeId]->outputParams[paramId].isActive) break;
         
         for (int streamIdId = 0; streamIdId < 8; streamIdId++)
         {
-            int streamId = instance->nodes[nodeId].outputParams[paramId].streamIds[streamIdId];
+            int streamId = instance->nodes[nodeId]->outputParams[paramId].streamIds[streamIdId];
             if (streamId == -1) break;
             
-            removeStream(instance->nodes[nodeId].outputParams[paramId].type, streamId);
+            removeStream(instance->nodes[nodeId]->outputParams[paramId].type, streamId);
         }
     }
     
-    // shift nodes by copyFrom
+    // shift nodes
     for (int iterNodeId = nodeId; iterNodeId < NUM_NODES - 1; iterNodeId++)
     {
-        instance->nodes[iterNodeId].copyFrom(instance->nodes[iterNodeId + 1]);
+        instance->nodes[iterNodeId] = instance->nodes[iterNodeId + 1]; // should maybe be fine with nullptrs? who knows tbh
+//        instance->nodes[iterNodeId]->copyFrom(instance->nodes[iterNodeId + 1]);
     }
     
     // TODO: clear final node
@@ -559,7 +547,7 @@ void DataManager::removeNode(Data::DataInstance *instance, int nodeId)
 
 Data::Node* DataManager::getOutputNode(Data::DataInstance* instance)
 {
-    return &instance->nodes[1]; // conventional
+    return instance->nodes[1]; // conventional
 }
 
 Data::Node* DataManager::getOutputNode()
@@ -570,7 +558,7 @@ Data::Node* DataManager::getOutputNode()
 
 Data::Node* DataManager::getInputNode(Data::DataInstance* instance)
 {
-    return &instance->nodes[0]; // conventional
+    return instance->nodes[0]; // conventional
 }
 
 Data::Node* DataManager::getInputNode()
@@ -597,7 +585,14 @@ void DataManager::startEditing()
     
     for (int i = 0; i < NUM_NODES; i++)
     {
-        inactiveInstance->nodes[i].copyFrom(activeInstance->nodes[i]);
+        if (activeInstance->nodes[i] == nullptr)
+        {
+            inactiveInstance->nodes[i] = nullptr;
+            continue;
+        }
+        inactiveInstance->nodes[i] = activeInstance->nodes[i]->getCopy();
+        
+//        ->copyFrom();
     }
     
     for (int i = 0; i < NUM_AUDIO_STREAMS; i++)

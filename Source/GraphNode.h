@@ -72,7 +72,7 @@ private:
 class GraphNode  : public juce::Component
 {
 public:
-    GraphNode(Data::Node, juce::Rectangle<float>&);
+    GraphNode(Data::Node*, juce::Rectangle<float>&);
     ~GraphNode() override;
 
     void paint (juce::Graphics&) override;
@@ -123,7 +123,7 @@ private:
     GraphNode__RemoveButton removeButton;
     
     
-    Data::Node data;
+    Data::Node* data;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphNode)
 };

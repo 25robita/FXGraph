@@ -13,10 +13,10 @@
 
 
 //==============================================================================
-GraphNode::GraphNode(Data::Node d, juce::Rectangle<float>& dragRect) : dragArea(dragRect), removeButton(*this)
+GraphNode::GraphNode(Data::Node* d, juce::Rectangle<float>& dragRect) : dragArea(dragRect), removeButton(*this)
 {
     data = d;
-    name = data.friendlyName;
+    name = data->friendlyName;
     
     removeButton.onClick = [this] () {
         onRemove();
@@ -25,23 +25,23 @@ GraphNode::GraphNode(Data::Node d, juce::Rectangle<float>& dragRect) : dragArea(
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
     
-    hasInputSide = data.hasInputSide;
-    hasOutputSide = data.hasOutputSide;
+    hasInputSide = data->hasInputSide;
+    hasOutputSide = data->hasOutputSide;
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!data.inputParams[paramId].isActive) break;
+        if (!data->inputParams[paramId].isActive) break;
         
-        addParameter(data.inputParams[paramId].type, data.inputParams[paramId].friendlyName, InputOrOutput::Input);
+        addParameter(data->inputParams[paramId].type, data->inputParams[paramId].friendlyName, InputOrOutput::Input);
     }
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!data.outputParams[paramId].isActive) break;
-        addParameter(data.outputParams[paramId].type, data.outputParams[paramId].friendlyName, InputOrOutput::Output);
+        if (!data->outputParams[paramId].isActive) break;
+        addParameter(data->outputParams[paramId].type, data->outputParams[paramId].friendlyName, InputOrOutput::Output);
     }
     
-    if (!data.isGlobalLockedNode)
+    if (!data->isGlobalLockedNode)
         addAndMakeVisible(removeButton);
 }
 
@@ -282,8 +282,8 @@ void GraphNode::mouseUp(const juce::MouseEvent &event)
     
     isBeingDragged = false;
     
-    data.position.setX(getX());
-    data.position.setY(getY());
+    data->position.setX(getX());
+    data->position.setY(getY());
     
     onDataUpdate();
 }

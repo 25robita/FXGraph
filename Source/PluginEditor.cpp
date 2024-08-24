@@ -21,16 +21,16 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
     addAndMakeVisible(m_graphAreaNodeContainer);
     for (int nodeId = 0; nodeId < NUM_NODES; nodeId++)
     {
-        auto& node = dataManager->activeInstance->nodes[nodeId];
+        auto node = dataManager->activeInstance->nodes[nodeId];
         
-        if (!node.isActive) break;
+        if (node == nullptr || !node->isActive) break;
         
         auto* n = new Common::Node();
         
         n->component.reset(new GraphNode(node, draggableArea));
         
         m_graphAreaNodeContainer.addAndMakeVisible(n->component.get());
-        n->component->setBounds(node.position.x, node.position.y, node.hasInputSide && node.hasOutputSide ? 300 : 150, n->component->getIdealHeight());
+        n->component->setBounds(node->position.x, node->position.y, node->hasInputSide && node->hasOutputSide ? 300 : 150, n->component->getIdealHeight());
         
         graphNodes.add(n);
         

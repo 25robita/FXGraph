@@ -115,49 +115,166 @@ struct Stream {
     Stream(ParameterType t) : type(t) {};
 };
 
-struct Node
+class Node
 {
-    bool isActive = false;
+public:
+    Node() {};
+    Node(juce::String& name) { friendlyName = name; };
+    virtual ~Node() {};
+    
+    bool isActive = false; // TODO: this doesn't seem necessary now that inactive nodes are nullptr?
     InputParameter inputParams[NUM_PARAMS];
     OutputParameter outputParams[NUM_PARAMS];
     juce::String friendlyName;
     juce::Point<float> position;
-    NodeType type;
-    // TODO: add thingo for when external VST, like path? or VST id, idk how this stuff works yet
     
-    bool isGlobalLockedNode = false; // used for global input and output
+    virtual NodeType getType() = 0;
+    virtual Node* getCopy() = 0;
+    
+    bool isGlobalLockedNode = false;
     bool hasInputSide = true;
     bool hasOutputSide = true;
-    
-    Node() { };
-    
-    Node(juce::String& name)
-    {
-        friendlyName = name;
-    };
-    
-//    void evaluate();
-    
-    void whattype() {DBG(type);};
-    
-    void copyFrom(Node other)
-    {
-        isActive = other.isActive;
-        friendlyName = other.friendlyName;
-        position = other.position;
-        type = other.type;
-        
-        isGlobalLockedNode = other.isGlobalLockedNode;
-        hasInputSide = other.hasInputSide;
-        hasOutputSide = other.hasOutputSide;
-        
-        for (int i = 0; i < NUM_PARAMS; i++)
-        {
-            inputParams[i].copyFrom(other.inputParams[i]);
-            outputParams[i].copyFrom(other.outputParams[i]);
-        }
-    }
 };
+
+class MainInputNode : public Node
+{
+public:
+    MainInputNode() 
+    {
+        isGlobalLockedNode = true;
+        hasInputSide = false;
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "In";
+        outputParams[0].type = ParameterType::Audio;
+    }
+    
+    NodeType getType() {return NodeType::MainInput;}
+    Node* getCopy() {return new MainInputNode(*this);}
+};
+
+class MainOutputNode : public Node
+{
+public:
+    MainOutputNode()
+    {
+        isGlobalLockedNode = true;
+        hasOutputSide = false;
+        
+        inputParams[0].isActive = true;
+        inputParams[0].friendlyName = "Out";
+        inputParams[0].type = ParameterType::Audio;
+    }
+    
+    NodeType getType() {return NodeType::MainOutput;}
+    Node* getCopy() {return new MainOutputNode(*this);}
+};
+
+class GainNode : public Node
+{
+public:
+    GainNode()
+    {
+        inputParams[0].isActive = true;
+        inputParams[0].friendlyName = "In";
+        inputParams[0].type = ParameterType::Audio;
+        
+        inputParams[1].isActive = true;
+        inputParams[1].friendlyName = "Gain";
+        inputParams[1].type = ParameterType::Value;
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "Out";
+        outputParams[0].type = ParameterType::Audio;
+    }
+    
+    NodeType getType() {return NodeType::Gain;}
+    Node* getCopy() {return new GainNode(*this);}
+};
+
+class LevelNode : public Node
+{
+public:
+    LevelNode()
+    {
+        inputParams[0].isActive = true;
+        inputParams[0].friendlyName = "In";
+        inputParams[0].type = ParameterType::Audio;
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "Float";
+        outputParams[0].type = ParameterType::Value;
+        
+        outputParams[1].isActive = true;
+        outputParams[1].friendlyName = "dbFS";
+        outputParams[1].type = ParameterType::Value;
+    }
+    
+    NodeType getType() {return NodeType::Level;}
+    Node* getCopy() {return new LevelNode(*this);}
+};
+
+class CorrelationNode : public Node
+{
+public:
+    CorrelationNode()
+    {
+        inputParams[0].isActive = true;
+        inputParams[0].friendlyName = "In";
+        inputParams[0].type = ParameterType::Audio;
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "Correlation";
+        outputParams[0].type = ParameterType::Value;
+    }
+    
+    NodeType getType() {return NodeType::Correlation;}
+    Node* getCopy() {return new CorrelationNode(*this);}
+};
+
+//struct Node
+//{
+//    bool isActive = false;
+//    InputParameter inputParams[NUM_PARAMS];
+//    OutputParameter outputParams[NUM_PARAMS];
+//    juce::String friendlyName;
+//    juce::Point<float> position;
+//    NodeType type;
+//    // TODO: add thingo for when external VST, like path? or VST id, idk how this stuff works yet
+//    
+//    bool isGlobalLockedNode = false; // used for global input and output
+//    bool hasInputSide = true;
+//    bool hasOutputSide = true;
+//    
+//    Node() { };
+//    
+//    Node(juce::String& name)
+//    {
+//        friendlyName = name;
+//    };
+//    
+////    void evaluate();
+//    
+//    void whattype() {DBG(type);};
+//    
+//    void copyFrom(Node other)
+//    {
+//        isActive = other.isActive;
+//        friendlyName = other.friendlyName;
+//        position = other.position;
+//        type = other.type;
+//        
+//        isGlobalLockedNode = other.isGlobalLockedNode;
+//        hasInputSide = other.hasInputSide;
+//        hasOutputSide = other.hasOutputSide;
+//        
+//        for (int i = 0; i < NUM_PARAMS; i++)
+//        {
+//            inputParams[i].copyFrom(other.inputParams[i]);
+//            outputParams[i].copyFrom(other.outputParams[i]);
+//        }
+//    }
+//};
 
 
 
@@ -216,7 +333,7 @@ struct ValueStream : Stream {
 struct DataInstance
 {
     int i;
-    Node nodes[NUM_NODES];
+    Node* nodes[NUM_NODES]; // could be vector, but probably not for the best
     AudioStream audioStreams[NUM_AUDIO_STREAMS];
     ValueStream valueStreams[NUM_VALUE_STREAMS];
     
@@ -227,6 +344,9 @@ struct DataInstance
         
         for (int i = 0; i < NUM_VALUE_STREAMS; i++)
             valueStreams[i].selfId = i;
+        
+        for (int i = 0; i < NUM_NODES; i++)
+            nodes[i] = nullptr; // maybe?
     }
     
     void prepareStreams();

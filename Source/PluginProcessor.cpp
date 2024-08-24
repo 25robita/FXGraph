@@ -30,23 +30,23 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     
     dataManager->startEditing();
     
-    dataManager->inactiveInstance->nodes[0].outputParams[0].streamIds[0] = 0;
-    dataManager->inactiveInstance->nodes[0].outputParams[0].streamIds[1] = 1;
+    dataManager->inactiveInstance->nodes[0]->outputParams[0].streamIds[0] = 0;
+    dataManager->inactiveInstance->nodes[0]->outputParams[0].streamIds[1] = 1;
     
     dataManager->addNode(2, NodeType::Gain, "Gain", {400, 100});
     
-    dataManager->inactiveInstance->nodes[2].inputParams[0].streamId = 0;
+    dataManager->inactiveInstance->nodes[2]->inputParams[0].streamId = 0;
     
     dataManager->addNode(3, NodeType::Correlation, "Correlation", {100, 300});
     
-    dataManager->inactiveInstance->nodes[3].inputParams[0].streamId = 1;
-    dataManager->inactiveInstance->nodes[3].outputParams[0].streamIds[0] = 0;
+    dataManager->inactiveInstance->nodes[3]->inputParams[0].streamId = 1;
+    dataManager->inactiveInstance->nodes[3]->outputParams[0].streamIds[0] = 0;
     
-    dataManager->inactiveInstance->nodes[2].inputParams[1].streamId = 0;
+    dataManager->inactiveInstance->nodes[2]->inputParams[1].streamId = 0;
     
-    dataManager->inactiveInstance->nodes[2].outputParams[0].streamIds[0] = 2;
+    dataManager->inactiveInstance->nodes[2]->outputParams[0].streamIds[0] = 2;
     
-    dataManager->inactiveInstance->nodes[1].inputParams[0].streamId = 2;
+    dataManager->inactiveInstance->nodes[1]->inputParams[0].streamId = 2;
     
     dataManager->inactiveInstance->prepare();
     
