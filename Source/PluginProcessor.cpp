@@ -37,10 +37,10 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     
     dataManager->inactiveInstance->nodes[2]->inputParams[0].streamId = 0;
     
-    dataManager->addNode(3, NodeType::Correlation, "Correlation", {100, 300});
+    dataManager->addNode(3, NodeType::Level, "Level", {100, 300});
     
     dataManager->inactiveInstance->nodes[3]->inputParams[0].streamId = 1;
-    dataManager->inactiveInstance->nodes[3]->outputParams[0].streamIds[0] = 0;
+    dataManager->inactiveInstance->nodes[3]->outputParams[1].streamIds[0] = 0;
     
     dataManager->inactiveInstance->nodes[2]->inputParams[1].streamId = 0;
     

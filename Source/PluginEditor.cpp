@@ -21,7 +21,7 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
     addAndMakeVisible(m_graphAreaNodeContainer);
     for (int nodeId = 0; nodeId < NUM_NODES; nodeId++)
     {
-        auto node = dataManager->activeInstance->nodes[nodeId];
+        auto& node = dataManager->activeInstance->nodes[nodeId];
         
         if (node == nullptr || !node->isActive) break;
         

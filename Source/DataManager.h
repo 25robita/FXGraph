@@ -11,6 +11,7 @@
 #pragma once
 #include "JuceHeader.h"
 #include "Envelope.h"
+#include "LUFSMeter/Ebu128LoudnessMeter.h"
 
 enum ParameterType
 {
@@ -25,6 +26,7 @@ enum NodeType
     Gain = 2,
     Level = 3,
     Correlation = 4,
+    Loudness = 5,
 };
 
 const int NUM_NODES = 64;
@@ -234,6 +236,41 @@ public:
     Node* getCopy() {return new CorrelationNode(*this);}
 };
 
+class LoudnessNode : public Node
+{
+public:
+    LoudnessNode()
+    {
+        meter.reset(new Ebu128LoudnessMeter());
+
+        inputParams[0].isActive = true;
+        inputParams[0].friendlyName = "In";
+        inputParams[0].type = ParameterType::Audio;
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "LUFS-S";
+        outputParams[0].type = ParameterType::Value;
+        
+        outputParams[1].isActive = true;
+        outputParams[1].friendlyName = "LUFS-M";
+        outputParams[1].type = ParameterType::Value;
+        
+        outputParams[2].isActive = true;
+        outputParams[2].friendlyName = "LUFS-I";
+        outputParams[2].type = ParameterType::Value;
+    }
+    
+    LoudnessNode(const LoudnessNode& ln) : Node(ln), meter(new Ebu128LoudnessMeter()) 
+    {
+    
+    }
+    
+    NodeType getType() {return NodeType::Loudness;}
+    Node* getCopy() {return new LoudnessNode(*this);}
+    
+    std::unique_ptr<Ebu128LoudnessMeter> meter;
+};
+
 struct AudioStream : Stream {
     juce::AudioBuffer<float> buffer;
     
@@ -289,7 +326,7 @@ struct ValueStream : Stream {
 struct DataInstance
 {
     int i;
-    Node* nodes[NUM_NODES]; // could be vector, but probably not for the best
+    Node* nodes[NUM_NODES]; // could be vector, but probably not for the best TODO: maybe change to std::unique_ptr or even owned array?? im giving up rn tbh
     AudioStream audioStreams[NUM_AUDIO_STREAMS];
     ValueStream valueStreams[NUM_VALUE_STREAMS];
     
@@ -303,6 +340,14 @@ struct DataInstance
         
         for (int i = 0; i < NUM_NODES; i++)
             nodes[i] = nullptr; // maybe?
+    }
+    
+    ~DataInstance()
+    {
+        for (int i = 0; i < NUM_NODES; i++) // manual construction because im being naughty and using raw pointers
+        {
+            delete nodes[i];
+        }
     }
     
     void prepareStreams();

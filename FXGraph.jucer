@@ -4,6 +4,94 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HnWc0u" name="FXGraph">
     <GROUP id="{2D4AB358-7276-2151-C7AB-B52088DECFC4}" name="Source">
+      <GROUP id="{197117DA-560E-117A-787A-7C2134154F43}" name="LUFSMeter">
+        <GROUP id="{D6727DD0-8841-6CA6-8BAB-66808E9D988C}" name="docs">
+          <GROUP id="{3AB980F8-DDC4-5D86-FE23-6CE77CFD3B39}" name="developmentNotes">
+            <GROUP id="{FDC5153B-2FE6-4AF7-63FB-E48FAB29F266}" name="111222_filter_coefficients">
+              <GROUP id="{2F9435C3-A677-56CD-781C-E805880D7DAF}" name="111222_calculate_the_filter_coefficients.rtfd">
+                <FILE id="W5zB0N" name="TXT.rtf" compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/111222_calculate_the_filter_coefficients.rtfd/TXT.rtf"/>
+              </GROUP>
+              <FILE id="qS9SBQ" name="111222_calculate_the_filter_coefficients.pdf"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/111222_calculate_the_filter_coefficients.pdf"/>
+              <FILE id="vTUksZ" name="111222_my_notes_to_the_calculation_of_the_filter_coefficients.tif"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/111222_my_notes_to_the_calculation_of_the_filter_coefficients.tif"/>
+              <FILE id="SfBwJb" name="Brian Neunaber - Direct-Form Filter Parameter Quantization.pdf"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/Brian Neunaber - Direct-Form Filter Parameter Quantization.pdf"/>
+              <FILE id="QxvdZw" name="Brian Neunaber - Direct-Form Filter Parameter Quantization.webloc"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/Brian Neunaber - Direct-Form Filter Parameter Quantization.webloc"/>
+              <FILE id="BOkULp" name="lecture3_small.pdf" compile="0" resource="0"
+                    file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/lecture3_small.pdf"/>
+              <FILE id="SATpLP" name="lecture3_small.pdf.webloc" compile="0" resource="0"
+                    file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/lecture3_small.pdf.webloc"/>
+              <FILE id="UhRqs8" name="Vicente Leunam - ITU-R-BS.1770-1 filter specifications.pdf"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/Vicente Leunam - ITU-R-BS.1770-1 filter specifications.pdf"/>
+              <FILE id="JLzcc2" name="Vicente Leunam - ITU-R-BS.1770-1 filter specifications.webloc"
+                    compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_filter_coefficients/Vicente Leunam - ITU-R-BS.1770-1 filter specifications.webloc"/>
+            </GROUP>
+            <FILE id="gSZ9Vi" name="111121_EBU_mode_summary.tif" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/developmentNotes/111121_EBU_mode_summary.tif"/>
+            <FILE id="f01vNz" name="111121_LRA_measurement.tif" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/developmentNotes/111121_LRA_measurement.tif"/>
+            <FILE id="zTQ5aQ" name="111215_integrated_loudness.tif" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/developmentNotes/111215_integrated_loudness.tif"/>
+            <FILE id="lPl9Wk" name="111222_2nd_order_filter_structure.tif" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/developmentNotes/111222_2nd_order_filter_structure.tif"/>
+            <FILE id="pwT1aJ" name="120422_gui.tif" compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/120422_gui.tif"/>
+            <FILE id="sAhGJy" name="120516_gui_level_history.tif" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/developmentNotes/120516_gui_level_history.tif"/>
+            <FILE id="M11w8Z" name="120725_integrated_loudness_revisited.tif" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/developmentNotes/120725_integrated_loudness_revisited.tif"/>
+            <FILE id="YQ43qe" name="120817_loudness_history_min_max_value_changes.tif"
+                  compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/120817_loudness_history_min_max_value_changes.tif"/>
+            <FILE id="c2VnC1" name="121122_forum_post.txt" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/developmentNotes/121122_forum_post.txt"/>
+            <FILE id="gLGcA5" name="130104_var_and_Value_playground.cpp" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/developmentNotes/130104_var_and_Value_playground.cpp"/>
+            <FILE id="vYTixe" name="140225_integrated_loudness_histogram__adding_gated_measurements.tif"
+                  compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/140225_integrated_loudness_histogram__adding_gated_measurements.tif"/>
+            <FILE id="ws4DBS" name="141017_LUFS_Meter_IntegratedLoudness.png" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/developmentNotes/141017_LUFS_Meter_IntegratedLoudness.png"/>
+            <FILE id="tnBBCK" name="141017_LUFS_Meter_IntegratedLoudness.procreate"
+                  compile="0" resource="0" file="Source/LUFSMeter/docs/developmentNotes/141017_LUFS_Meter_IntegratedLoudness.procreate"/>
+          </GROUP>
+          <GROUP id="{E205B738-25C0-7727-20DB-C4B76DCC1955}" name="technicalDocuments">
+            <FILE id="Aova4R" name="ibc11_10things_r128.pdf" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/technicalDocuments/ibc11_10things_r128.pdf"/>
+            <FILE id="DXA5cm" name="lm-pres - by Fons Adriansen.pdf" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/technicalDocuments/lm-pres - by Fons Adriansen.pdf"/>
+            <FILE id="vXUPSh" name="R-REC-BS.1770-2-201103.pdf" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/technicalDocuments/R-REC-BS.1770-2-201103.pdf"/>
+            <FILE id="DNwOe9" name="R-REC-BS.1770-3-201208.pdf" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/technicalDocuments/R-REC-BS.1770-3-201208.pdf"/>
+            <FILE id="e6J38t" name="r128.pdf" compile="0" resource="0" file="Source/LUFSMeter/docs/technicalDocuments/r128.pdf"/>
+            <FILE id="JAxiBZ" name="tech3341 &#8216;EBU Mode&#8217; metering.pdf"
+                  compile="0" resource="0" file="Source/LUFSMeter/docs/technicalDocuments/tech3341 &#8216;EBU Mode&#8217; metering.pdf"/>
+            <FILE id="RwWyAb" name="tech3342 LRA.pdf" compile="0" resource="0"
+                  file="Source/LUFSMeter/docs/technicalDocuments/tech3342 LRA.pdf"/>
+            <FILE id="iDrSvB" name="tech3343.pdf" compile="0" resource="0" file="Source/LUFSMeter/docs/technicalDocuments/tech3343.pdf"/>
+            <FILE id="GOrzrs" name="tech3344.pdf" compile="0" resource="0" file="Source/LUFSMeter/docs/technicalDocuments/tech3344.pdf"/>
+            <FILE id="FXBZ6m" name="trev_2010-Q3_loudness_Camerer.pdf" compile="0"
+                  resource="0" file="Source/LUFSMeter/docs/technicalDocuments/trev_2010-Q3_loudness_Camerer.pdf"/>
+          </GROUP>
+          <FILE id="dSiTS5" name="How_to_set_up_the_LUFS_Meter_on_OS_X.rst" compile="0"
+                resource="0" file="Source/LUFSMeter/docs/How_to_set_up_the_LUFS_Meter_on_OS_X.rst"/>
+          <FILE id="Qlreoa" name="How_to_set_up_windows_7_for_juce.rst" compile="0"
+                resource="0" file="Source/LUFSMeter/docs/How_to_set_up_windows_7_for_juce.rst"/>
+        </GROUP>
+        <GROUP id="{223E9DC2-CB3D-4B85-B675-2F426530D449}" name="filters">
+          <FILE id="UcSx0R" name="SecondOrderIIRFilter.cpp" compile="1" resource="0"
+                file="Source/LUFSMeter/filters/SecondOrderIIRFilter.cpp"/>
+          <FILE id="GDdZme" name="SecondOrderIIRFilter.h" compile="0" resource="0"
+                file="Source/LUFSMeter/filters/SecondOrderIIRFilter.h"/>
+        </GROUP>
+        <FILE id="lo72Uu" name="Ebu128LoudnessMeter.cpp" compile="1" resource="0"
+              file="Source/LUFSMeter/Ebu128LoudnessMeter.cpp"/>
+        <FILE id="fsxnK6" name="Ebu128LoudnessMeter.h" compile="0" resource="0"
+              file="Source/LUFSMeter/Ebu128LoudnessMeter.h"/>
+        <FILE id="NmvyiR" name="MacrosAndJuceHeaders.h" compile="0" resource="0"
+              file="Source/LUFSMeter/MacrosAndJuceHeaders.h"/>
+        <FILE id="no0jYw" name="README.rst" compile="0" resource="0" file="Source/LUFSMeter/README.rst"/>
+      </GROUP>
       <FILE id="oZoO5N" name="DataManager.cpp" compile="1" resource="0" file="Source/DataManager.cpp"/>
       <FILE id="yOfCfI" name="DataManager.h" compile="0" resource="0" file="Source/DataManager.h"/>
       <FILE id="eZfXXb" name="PluginProcessor.cpp" compile="1" resource="0"

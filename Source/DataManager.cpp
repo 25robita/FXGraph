@@ -161,8 +161,8 @@ void Data::DataInstance::evaluate(int nodeId)
                     output->copyFrom(channel, 0, *mainInputNode->mainInput, channel, 0, mainInputNode->mainInput->getNumSamples());
                 }
             }
-            break;
         }
+            break;
         case NodeType::MainOutput:
             break;
         case NodeType::Gain:
@@ -204,10 +204,10 @@ void Data::DataInstance::evaluate(int nodeId)
                     output->applyGainRamp(channel, 0, output->getNumSamples(), prevGain, gain);
                 }
             }
-            
-            break;
         }
-        case NodeType::Level:
+            break;
+        case NodeType::Level: // TODO: seems to read lower than in logic? idk what's going on here
+            //TODO: also maybe add peak/true peak options for funsies
         {
             int inputStreamId = node->inputParams[0].streamId;
             
@@ -251,9 +251,8 @@ void Data::DataInstance::evaluate(int nodeId)
                 if (streamId == -1) break;
                 valueStreams[streamId].setValue(total);
             }
-            
-            break;
         }
+            break;
         case NodeType::Correlation:
         {
             int inputStreamId = node->inputParams[0].streamId;
@@ -305,8 +304,58 @@ void Data::DataInstance::evaluate(int nodeId)
                 if (streamId == -1) break;
                 valueStreams[streamId].setValue(correlation);
             }
-            break;
         }
+            break;
+        case NodeType::Loudness: // TODO: seems to read lower than in logic? idk what's going on here
+        {
+            auto loudnessNode = static_cast<Data::LoudnessNode*>(node);
+            
+            DBG("hiii");
+            
+            int inputStreamId = loudnessNode->inputParams[0].streamId;
+            
+            if (inputStreamId == -1) 
+            {
+//                for (int streamId : loudnessNode->outputParams[0].streamIds)
+//                {
+//                    if (streamId == -1) break;
+//                    valueStreams[streamId].setValue(0);
+//                }
+                break;
+            }
+            
+            auto input = audioStreams[inputStreamId].buffer;
+            
+            DBG(input.getMagnitude(0, input.getNumSamples()));
+            
+            loudnessNode->meter->processBlock(input);
+            
+            
+            float loudness = loudnessNode->meter->getShortTermLoudness();
+            
+            for (int streamId : node->outputParams[0].streamIds)
+            {
+                if (streamId == -1) break;
+                valueStreams[streamId].setValue(loudness);
+            }
+            
+            loudness = loudnessNode->meter->getMomentaryLoudness();
+            
+            for (int streamId : node->outputParams[1].streamIds)
+            {
+                if (streamId == -1) break;
+                valueStreams[streamId].setValue(loudness);
+            }
+            
+            loudness = loudnessNode->meter->getIntegratedLoudness();
+        
+            for (int streamId : node->outputParams[2].streamIds)
+            {
+                if (streamId == -1) break;
+                valueStreams[streamId].setValue(loudness);
+            }
+        }
+            break;
     }
 }
 
@@ -376,7 +425,7 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
 //    auto node = instance->nodes[index];
 
     
-    Data::Node* node;
+    Data::Node* node = nullptr;
     
     switch (type) // pre-init streams
     {
@@ -400,18 +449,24 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
             node = new Data::LevelNode();
             break;
         case NodeType::Correlation:
-            node  = new Data::CorrelationNode();
+            node = new Data::CorrelationNode();
             break;
+        case NodeType::Loudness:
+            node = new Data::LoudnessNode();
     }
     
-    if (node != nullptr)
+    if (node == nullptr)
     {
-        node->isActive = true;
-        node->position = position;
-        node->friendlyName = name;
-        
-        instance->nodes[index] = node;
+        DEB("nullptr node");
+        return;
     }
+    
+    node->isActive = true;
+    node->position = position;
+    node->friendlyName = name;
+    
+    instance->nodes[index] = node;
+    
 }
 
 void DataManager::removeStream(ParameterType type, int streamId)
@@ -592,9 +647,9 @@ void DataManager::startEditing()
             inactiveInstance->nodes[i] = nullptr;
             continue;
         }
-        inactiveInstance->nodes[i] = activeInstance->nodes[i]->getCopy();
         
-//        ->copyFrom();
+        delete inactiveInstance->nodes[i]; // oopsiess... should have been doing this lol
+        inactiveInstance->nodes[i] = activeInstance->nodes[i]->getCopy();
     }
     
     for (int i = 0; i < NUM_AUDIO_STREAMS; i++)
