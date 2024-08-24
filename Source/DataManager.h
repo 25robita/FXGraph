@@ -149,6 +149,8 @@ public:
         outputParams[0].type = ParameterType::Audio;
     }
     
+    juce::AudioBuffer<float>* mainInput;
+    
     NodeType getType() {return NodeType::MainInput;}
     Node* getCopy() {return new MainInputNode(*this);}
 };
@@ -231,52 +233,6 @@ public:
     NodeType getType() {return NodeType::Correlation;}
     Node* getCopy() {return new CorrelationNode(*this);}
 };
-
-//struct Node
-//{
-//    bool isActive = false;
-//    InputParameter inputParams[NUM_PARAMS];
-//    OutputParameter outputParams[NUM_PARAMS];
-//    juce::String friendlyName;
-//    juce::Point<float> position;
-//    NodeType type;
-//    // TODO: add thingo for when external VST, like path? or VST id, idk how this stuff works yet
-//    
-//    bool isGlobalLockedNode = false; // used for global input and output
-//    bool hasInputSide = true;
-//    bool hasOutputSide = true;
-//    
-//    Node() { };
-//    
-//    Node(juce::String& name)
-//    {
-//        friendlyName = name;
-//    };
-//    
-////    void evaluate();
-//    
-//    void whattype() {DBG(type);};
-//    
-//    void copyFrom(Node other)
-//    {
-//        isActive = other.isActive;
-//        friendlyName = other.friendlyName;
-//        position = other.position;
-//        type = other.type;
-//        
-//        isGlobalLockedNode = other.isGlobalLockedNode;
-//        hasInputSide = other.hasInputSide;
-//        hasOutputSide = other.hasOutputSide;
-//        
-//        for (int i = 0; i < NUM_PARAMS; i++)
-//        {
-//            inputParams[i].copyFrom(other.inputParams[i]);
-//            outputParams[i].copyFrom(other.outputParams[i]);
-//        }
-//    }
-//};
-
-
 
 struct AudioStream : Stream {
     juce::AudioBuffer<float> buffer;
@@ -386,11 +342,11 @@ public:
     void removeNode(int nodeId);
     void removeNode(Data::DataInstance* instance, int nodeId);
     
-    Data::Node* getOutputNode(Data::DataInstance* instance);
-    Data::Node* getOutputNode();
+    Data::MainOutputNode* getOutputNode(Data::DataInstance* instance);
+    Data::MainOutputNode* getOutputNode();
     
-    Data::Node* getInputNode(Data::DataInstance* instance);
-    Data::Node* getInputNode();
+    Data::MainInputNode* getInputNode(Data::DataInstance* instance);
+    Data::MainInputNode* getInputNode();
     
     Data::DataInstance* activeInstance;
     Data::DataInstance* inactiveInstance;

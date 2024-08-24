@@ -147,16 +147,18 @@ void Data::DataInstance::evaluate(int nodeId)
     switch (node->getType()) {
         case NodeType::MainInput:
         {
+            MainInputNode* mainInputNode = static_cast<MainInputNode*>(node);
+            
             for (int outputIdId = 0; outputIdId < 8; outputIdId++)
             {
-                int outputId = node->outputParams[0].streamIds[outputIdId];
+                int outputId = mainInputNode->outputParams[0].streamIds[outputIdId];
                 
                 if (outputId == -1) break;
                 auto* output = &audioStreams[outputId].buffer;
                 
-                for (int channel = 0; channel < tempInpt->getNumChannels(); channel++)
+                for (int channel = 0; channel < mainInputNode->mainInput->getNumChannels(); channel++)
                 {
-                    output->copyFrom(channel, 0, *tempInpt, channel, 0, tempInpt->getNumSamples());
+                    output->copyFrom(channel, 0, *mainInputNode->mainInput, channel, 0, mainInputNode->mainInput->getNumSamples());
                 }
             }
             break;
@@ -166,7 +168,7 @@ void Data::DataInstance::evaluate(int nodeId)
         case NodeType::Gain:
         {
             int inputStreamId = node->inputParams[0].streamId;
-            int gainStreamId =node->inputParams[1].streamId;
+            int gainStreamId = node->inputParams[1].streamId;
             
             if (inputStreamId == -1) break; // no point doing anything
             
@@ -545,25 +547,25 @@ void DataManager::removeNode(Data::DataInstance *instance, int nodeId)
 
 /** Reading methods*/
 
-Data::Node* DataManager::getOutputNode(Data::DataInstance* instance)
+Data::MainOutputNode* DataManager::getOutputNode(Data::DataInstance* instance)
 {
-    return instance->nodes[1]; // conventional
+    return static_cast<Data::MainOutputNode*>(instance->nodes[1]);
 }
 
-Data::Node* DataManager::getOutputNode()
+Data::MainOutputNode* DataManager::getOutputNode()
 {
     return getOutputNode(activeInstance);
 }
 
 
-Data::Node* DataManager::getInputNode(Data::DataInstance* instance)
+Data::MainInputNode* DataManager::getInputNode(Data::DataInstance* instance)
 {
-    return instance->nodes[0]; // conventional
+    return static_cast<Data::MainInputNode*>(instance->nodes[0]);
 }
 
-Data::Node* DataManager::getInputNode()
+Data::MainInputNode* DataManager::getInputNode()
 {
-    return getOutputNode(activeInstance);
+    return getInputNode(activeInstance);
 }
 
 

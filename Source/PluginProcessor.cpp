@@ -195,8 +195,7 @@ void FXGraphAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
         buffer.clear (i, 0, buffer.getNumSamples());
     
     // processor for the output node
-    dataManager->activeInstance->tempInpt = &buffer; // ewwwwww
-    
+    dataManager->getInputNode()->mainInput = &buffer; // ewwwwww
     
     dataManager->activeInstance->evaluate();
     
