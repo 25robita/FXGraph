@@ -92,6 +92,19 @@ struct OutputParameter : Parameter {
             streamIds[i] = other.streamIds[i];
         }
     }
+    
+    bool addStreamId(int streamId) // returns success
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            if (streamIds[i] != -1) continue;
+            
+            streamIds[i] = streamId;
+            return true;
+        }
+        
+        return false;
+    }
 };
 
 struct Stream {

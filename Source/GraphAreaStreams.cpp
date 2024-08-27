@@ -27,7 +27,7 @@ bool GraphAreaStreams::hitTest(int x, int y)
 {
     for (auto stream : streams)
     {
-        if (stream->path->contains(x, y)) return true;
+        if (stream->path->contains(x, y)) return true; // TODO: exclude param pill rects
     }
     return false;
 }
@@ -116,18 +116,42 @@ juce::Path* GraphAreaStreams::createStream(juce::Array<juce::Point<float>> ancho
     return out;
 }
 
-void GraphAreaStreams::paintStream(juce::Graphics& g, Data::Stream stream)
+GraphAreaStreams::Stream* GraphAreaStreams::paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type)
 {
     auto streamEl = new Stream;
     
-    streamEl->type = stream.type;
-    streamEl->streamId = stream.selfId;
+    streamEl->type = type;
+//    streamEl->streamId = stream.selfId;
     
-    if (stream.type == ParameterType::Audio)
+    if (type == ParameterType::Audio)
         g.setColour(juce::Colour(0xff4CA2C5));
     else
         g.setColour(juce::Colour(0xffFAA21B));
     
+//    auto inputNode = graphNodes[stream.inputNodeId];
+//    auto outputNode = graphNodes[stream.outputNodeId];
+//    
+//    // InputOrOutput is swapped because the stream inputs from the output side of the input node
+//    auto start = inputNode->component->getParameterPosition(InputOrOutput::Output, stream.inputParamId);
+//    
+//    auto end = outputNode->component->getParameterPosition(InputOrOutput::Input, stream.outputParamId);
+    
+    streamEl->path.reset(createStream({
+        startPosition,
+        {(startPosition.getX() + endPosition.getX()) / 2.0f, startPosition.getY()},
+        {(startPosition.getX() + endPosition.getX()) / 2.0f, endPosition.getY()},
+        endPosition
+    }));
+    
+    g.fillPath(*streamEl->path.get());
+    
+    streams.add(streamEl);
+    
+    return streamEl;
+}
+
+void GraphAreaStreams::paintStream(juce::Graphics& g, Data::Stream stream)
+{
     auto inputNode = graphNodes[stream.inputNodeId];
     auto outputNode = graphNodes[stream.outputNodeId];
     
@@ -136,16 +160,9 @@ void GraphAreaStreams::paintStream(juce::Graphics& g, Data::Stream stream)
     
     auto end = outputNode->component->getParameterPosition(InputOrOutput::Input, stream.outputParamId);
     
-    streamEl->path.reset(createStream({
-        start,
-        {(start.getX() + end.getX()) / 2.0f, start.getY()},
-        {(start.getX() + end.getX()) / 2.0f, end.getY()},
-        end
-    }));
+    auto* streamEl = paintStreamInternal(g, start, end, stream.type);
     
-    g.fillPath(*streamEl->path.get());
-    
-    streams.add(streamEl);
+    streamEl->streamId = stream.selfId;
 }
 
 void GraphAreaStreams::paint (juce::Graphics& g)
@@ -167,7 +184,6 @@ void GraphAreaStreams::paint (juce::Graphics& g)
         paintStream(g, stream);
     }
     
-    
     if (streamSelected)
     {
         auto shadow = juce::DropShadow(juce::Colour(0xa0cccccc), 40, {0, 0});
@@ -180,6 +196,11 @@ void GraphAreaStreams::paint (juce::Graphics& g)
                 break;
             }
         }
+    }
+    
+    if (dragStreamNodeId != -1)
+    {
+        paintStreamInternal(g, dragStreamOrigin, dragStreamEndpoint, dragStreamType);
     }
 }
 
@@ -240,5 +261,133 @@ void GraphAreaStreams::selectStream(ParameterType type, int streamId)
     selectedStreamId = streamId;
     selectedStreamType = type;
     
+    repaint();
+}
+
+void GraphAreaStreams::handleStartDragStream(int nodeId, InputOrOutput inputOrOutput, int paramId)
+{
+    dragStreamNodeId = nodeId;
+    dragStreamInputOrOutput = inputOrOutput;
+    dragStreamParamId = paramId;
+    dragStreamType = graphNodes[nodeId]->component->getParameterType(dragStreamInputOrOutput, paramId);
+    
+    // don't need to repaint yet, because the stream won't be going anywhere
+    
+    dragStreamOrigin = graphNodes[nodeId]->component->getParameterPosition(inputOrOutput, paramId);
+}
+
+void GraphAreaStreams::handleDragStreamEnd(juce::Point<float> position)
+{
+    // check if mouse is over another parameter; if yes, connect the two, overriding and deleting any existing stream connected to the input side of the output node of the new stream if yk what i mean
+    // if not, just nodeId = -1 and repaint so it clears the thingo. consider whether if side is input (as in dragging left to right) should it clear the stream? maybe? maybe not? who knows, i mean they can already do it anyway.
+
+    for (auto node : graphNodes)
+    {
+        if (!node->component->getBounds().contains(position.toInt())) continue;
+        
+        if (node->component->getBounds().getCentreX() > position.getX()) // check input params
+        {
+            if (dragStreamInputOrOutput == InputOrOutput::Input)
+            { // wait nvm this can't work so we have to do the default which is clear the stream
+                goto endloop;
+            }
+            
+            for (auto param : node->component->getInputParams())
+            {
+                if (!param->component->getPillRect().contains(param->component->getLocalPoint(this, position.toInt()).toFloat())) continue;
+                
+                auto& paramData = dataManager->activeInstance->nodes[node->component->getNodeId()]->inputParams[param->component->getParamId()];
+                
+                // ensure they are of the same type
+                if (paramData.type != dragStreamType) goto endloop;
+                
+                dataManager->startEditing();
+                
+                // first, remove any stream with the remove stream method that connects to the other one's input side
+                
+                auto currentStreamId = paramData.streamId;
+                
+                if (currentStreamId != -1)
+                {
+                    dataManager->removeStream(dragStreamType, currentStreamId);
+                }
+                
+                // then, find the next available streamid
+                int id = dataManager->inactiveInstance->getNextStreamId(dragStreamType);
+                
+                // then, just add to the output and set the input
+                if (!dataManager->inactiveInstance->nodes[dragStreamNodeId]->outputParams[dragStreamParamId].addStreamId(id)) 
+                {
+                    //TODO: handle error!!!!!!
+                    DBG("failed to add stream - too many streams on output parameter");
+                }
+                
+                dataManager->inactiveInstance->nodes[node->component->getNodeId()]->inputParams[param->component->getParamId()].streamId = id;
+                
+                dataManager->finishEditing();
+                
+                DBG("we've finished");
+                                
+                repaint();
+            }
+        } else
+        { // check output params
+            if (dragStreamInputOrOutput == InputOrOutput::Output)
+            { // wait nvm this can't work so we have to do the default which is clear the stream
+                goto endloop;
+            }
+            
+            for (auto param : node->component->getOutputParams())
+            {
+                if (!param->component->getPillRect().contains(param->component->getLocalPoint(this, position.toInt()).toFloat())) continue;
+                
+                auto& paramData = dataManager->activeInstance->nodes[node->component->getNodeId()]->outputParams[param->component->getParamId()];
+                
+                // ensure they are of the same type
+                if (paramData.type != dragStreamType) goto endloop;
+                
+                dataManager->startEditing();
+                
+                // first, remove any stream with the remove stream method that connects to the other one's input side
+                
+                auto currentStreamId = dataManager->inactiveInstance->nodes[dragStreamNodeId]->inputParams[dragStreamParamId].streamId;
+                
+                if (currentStreamId != -1)
+                {
+                    dataManager->removeStream(dragStreamType, currentStreamId);
+                }
+                
+                // then, find the next available streamid
+                int id = dataManager->inactiveInstance->getNextStreamId(dragStreamType);
+                
+                // then, just add to the output and set the input
+                if (!dataManager->inactiveInstance->nodes[node->component->getNodeId()]->outputParams[param->component->getParamId()].addStreamId(id))
+                {
+                    //TODO: handle error!!!!!!
+                    DBG("failed to add stream - too many streams on output parameter");
+                }
+                
+                dataManager->inactiveInstance->nodes[dragStreamNodeId]->inputParams[dragStreamParamId].streamId = id;
+                
+                dataManager->finishEditing();
+                
+                DBG("we've finished");
+                                
+                repaint();
+            }
+        }
+    }
+    
+    endloop: // omg its a label and goto statement
+    
+    // here we clear the stream; hopefully one returns once one has created a stream in the previous loop. one may be an idiot, but that would be their problem.
+    
+    dragStreamNodeId = -1;
+    repaint();
+}
+
+void GraphAreaStreams::handleDragStreamMove(juce::Point<float> position)
+{
+    dragStreamEndpoint = position;
     repaint();
 }

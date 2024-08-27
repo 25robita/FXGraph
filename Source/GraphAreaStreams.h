@@ -37,6 +37,10 @@ public:
     void selectStream(); // clears selection
     void selectStream(ParameterType type, int streamId);
     
+    void handleStartDragStream(int nodeId, InputOrOutput inputOrOutuput, int paramId);
+    void handleDragStreamMove(juce::Point<float> position);
+    void handleDragStreamEnd(juce::Point<float> position);
+    
     std::function<void(ParameterType type, int streamId)> handleSelectStream;
     std::function<void()> handleRemoveStream;
     
@@ -58,6 +62,7 @@ private:
     
     juce::Path* createStream(juce::Array<juce::Point<float>> anchorPoints);
     void paintStream(juce::Graphics& g, Data::Stream stream);
+    Stream* paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type);
     juce::Rectangle<float> getStreamRectangle(Direction direction, juce::Point<float> start, juce::Point<float> end, float thickness);
     
     juce::OwnedArray<Common::Node>& graphNodes;
@@ -68,6 +73,13 @@ private:
     ParameterType selectedStreamType;
     int selectedStreamId;
     bool streamSelected;
+    
+    int dragStreamNodeId = -1;
+    int dragStreamParamId;
+    InputOrOutput dragStreamInputOrOutput;
+    ParameterType dragStreamType;
+    juce::Point<float> dragStreamOrigin;
+    juce::Point<float> dragStreamEndpoint;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GraphAreaStreams)
 };

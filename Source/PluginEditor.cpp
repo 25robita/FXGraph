@@ -19,7 +19,7 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
     dataManager = d;
     
     addAndMakeVisible(m_graphAreaNodeContainer);
-    for (int nodeId = 0; nodeId < NUM_NODES; nodeId++)
+    for (int nodeId = 0; nodeId < NUM_NODES; nodeId++) // TODO: put this in a function because all this will need to be repeated when i add nodes using the UI
     {
         auto& node = dataManager->activeInstance->nodes[nodeId];
         
@@ -27,7 +27,7 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
         
         auto* n = new Common::Node();
         
-        n->component.reset(new GraphNode(node, draggableArea));
+        n->component.reset(new GraphNode(dataManager, nodeId, draggableArea));
         
         m_graphAreaNodeContainer.addAndMakeVisible(n->component.get());
         n->component->setBounds(node->position.x, node->position.y, node->hasInputSide && node->hasOutputSide ? 300 : 150, n->component->getIdealHeight());
@@ -52,7 +52,15 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
             dataManager->removeNode(nodeId);
             dataManager->finishEditing();
             
+            // bump all node ids for node components
+            
             graphNodes.removeObject(n);
+            
+            for (auto node : graphNodes)
+            {
+                if (node->component->getNodeId() > nodeId)
+                    node->component->setNodeId(node->component->getNodeId() - 1);
+            }
             
             m_graphAreaStreams.repaint();
         };
@@ -74,6 +82,18 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
             }
             
             return out;
+        };
+        
+        n->component->onDragStreamStart = [this, nodeId] (InputOrOutput inputOrOutput, int paramId) {
+            m_graphAreaStreams.handleStartDragStream(nodeId, inputOrOutput, paramId);
+        };
+        
+        n->component->onDragStream = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
+            m_graphAreaStreams.handleDragStreamMove(position);
+        };
+        
+        n->component->onDragStreamEnd = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
+            m_graphAreaStreams.handleDragStreamEnd(position);
         };
     }
     

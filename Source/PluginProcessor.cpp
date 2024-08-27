@@ -40,9 +40,11 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     dataManager->addNode(3, NodeType::Level, "Level", {100, 300});
     
     dataManager->inactiveInstance->nodes[3]->inputParams[0].streamId = 1;
-    dataManager->inactiveInstance->nodes[3]->outputParams[1].streamIds[0] = 0;
+//    dataManager->inactiveInstance->nodes[3]->outputParams[1].streamIds[0] = 0;
     
-    dataManager->inactiveInstance->nodes[2]->inputParams[1].streamId = 0;
+//    dataManager->inactiveInstance->nodes[2]->inputParams[1].streamId = 0;
+    dataManager->inactiveInstance->nodes[2]->inputParams[1].isConst = true;
+    dataManager->inactiveInstance->nodes[2]->inputParams[1].constValue = 0;
     
     dataManager->inactiveInstance->nodes[2]->outputParams[0].streamIds[0] = 2;
     
@@ -155,6 +157,9 @@ void FXGraphAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    
+    // TODO: release all the buffers
+    // TODO: initialise LUFSMeter (might have to be done elsewhere)
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

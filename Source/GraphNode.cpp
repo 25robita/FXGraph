@@ -13,10 +13,11 @@
 
 
 //==============================================================================
-GraphNode::GraphNode(Data::Node* d, juce::Rectangle<float>& dragRect) : dragArea(dragRect), removeButton(*this)
+GraphNode::GraphNode(std::shared_ptr<DataManager> d, int node, juce::Rectangle<float>& dragRect) : dragArea(dragRect), removeButton(*this)
 {
-    data = d;
-    name = data->friendlyName;
+    dataManager = d;
+    nodeId = node;
+    name = dataManager->activeInstance->nodes[nodeId]->friendlyName;
     
     removeButton.onClick = [this] () {
         onRemove();
@@ -25,23 +26,29 @@ GraphNode::GraphNode(Data::Node* d, juce::Rectangle<float>& dragRect) : dragArea
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
     
-    hasInputSide = data->hasInputSide;
-    hasOutputSide = data->hasOutputSide;
+    hasInputSide = dataManager->activeInstance->nodes[nodeId]->hasInputSide;
+    hasOutputSide = dataManager->activeInstance->nodes[nodeId]->hasOutputSide;
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!data->inputParams[paramId].isActive) break;
+        if (!dataManager->activeInstance->nodes[nodeId]->inputParams[paramId].isActive) break;
         
-        addParameter(data->inputParams[paramId].type, data->inputParams[paramId].friendlyName, InputOrOutput::Input);
+        addParameter(dataManager->activeInstance->nodes[nodeId]->inputParams[paramId].type, paramId, dataManager->activeInstance->nodes[nodeId]->inputParams[paramId].friendlyName, InputOrOutput::Input);
+        
+        if (dataManager->activeInstance->nodes[nodeId]->inputParams[paramId].isConst)
+        {
+            inputParameters.getLast()->component->setIsConst(true);
+            inputParameters.getLast()->component->setConstValue(dataManager->activeInstance->nodes[nodeId]->inputParams[paramId].constValue);
+        }
     }
     
     for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
     {
-        if (!data->outputParams[paramId].isActive) break;
-        addParameter(data->outputParams[paramId].type, data->outputParams[paramId].friendlyName, InputOrOutput::Output);
+        if (!dataManager->activeInstance->nodes[nodeId]->outputParams[paramId].isActive) break;
+        addParameter(dataManager->activeInstance->nodes[nodeId]->outputParams[paramId].type, paramId, dataManager->activeInstance->nodes[nodeId]->outputParams[paramId].friendlyName, InputOrOutput::Output);
     }
     
-    if (!data->isGlobalLockedNode)
+    if (!dataManager->activeInstance->nodes[nodeId]->isGlobalLockedNode)
         addAndMakeVisible(removeButton);
 }
 
@@ -49,12 +56,41 @@ GraphNode::~GraphNode()
 {
 }
 
-void GraphNode::addParameter(ParameterType paramType, const juce::String& name, InputOrOutput inputOrOutput)
+void GraphNode::addParameter(ParameterType paramType, int paramId, const juce::String& name, InputOrOutput inputOrOutput)
 {
     auto* p = new Parameter();
     
-    p->component.reset(new GraphNode__Parameter(paramType, name, inputOrOutput, *this));
+    p->component.reset(new GraphNode__Parameter(paramType, paramId, name, inputOrOutput, *this));
     addAndMakeVisible(p->component.get());
+    
+    p->component->onConstValueChanged = [this, paramId] (float value) {
+        dataManager->startEditing();
+        
+        dataManager->inactiveInstance->nodes[nodeId]->inputParams[paramId].constValue = value;
+        
+        dataManager->finishEditing();
+    };
+    
+    p->component->onSetIsConst = [this, p, paramId] (bool isConst) {
+        dataManager->startEditing();
+        
+        dataManager->inactiveInstance->nodes[nodeId]->inputParams[paramId].isConst = isConst;
+        dataManager->inactiveInstance->nodes[nodeId]->inputParams[paramId].constValue = p->component->getConstValue();
+        
+        dataManager->finishEditing();
+    };
+    
+    p->component->onDragStart = [this, inputOrOutput, paramId] () {
+        onDragStreamStart(inputOrOutput, paramId);
+    };
+    
+    p->component->onDrag = [this, inputOrOutput, paramId] (juce::Point<float> position) {
+        onDragStream(inputOrOutput, paramId, position);
+    };
+    
+    p->component->onDragEnd = [this, inputOrOutput, paramId] (juce::Point<float> position) {
+        onDragStreamEnd(inputOrOutput, paramId, position);
+    };
     
     p->inputOrOutput = inputOrOutput;
     
@@ -282,15 +318,44 @@ void GraphNode::mouseUp(const juce::MouseEvent &event)
     
     isBeingDragged = false;
     
-    data->position.setX(getX());
-    data->position.setY(getY());
+    dataManager->startEditing();
+    dataManager->inactiveInstance->nodes[nodeId]->position.setX(getX());
+    dataManager->inactiveInstance->nodes[nodeId]->position.setY(getY());
+    dataManager->finishEditing();
     
-    onDataUpdate();
+//    onDataUpdate();
 }
 
-GraphNode__Parameter::GraphNode__Parameter(ParameterType type, const juce::String& text, InputOrOutput side, GraphNode& graphNode) : paramName(text), paramType(type), owner(graphNode)
+ParameterType GraphNode::getParameterType(InputOrOutput side, int index)
+{
+    if (side == InputOrOutput::Input)
+    {
+        return inputParameters[index]->component->paramType;
+    }
+    
+    return outputParameters[index]->component->paramType;
+}
+
+GraphNode__Parameter::GraphNode__Parameter(ParameterType type, int id, const juce::String& text, InputOrOutput side, GraphNode& graphNode) : paramName(text), paramType(type), owner(graphNode)
 {
     inputOrOutput = side;
+    paramId = id;
+    
+    addChildComponent(constLabel);
+    constLabel.setEditable(true);
+    constLabel.setFont(Font(FontOptions(10)));
+    constLabel.setJustificationType(Justification::centred);
+    
+    constLabel.onTextChange = [this] () {
+        if (constLabel.getText().isEmpty())
+        { // make it not a const
+            setIsConst(false);
+            onSetIsConst(isConst);
+        } else
+        {
+            onConstValueChanged(constLabel.getText().getFloatValue()); // TODO: validate input as float
+        }
+    };
 }
 
 GraphNode__Parameter::~GraphNode__Parameter()
@@ -309,8 +374,6 @@ void GraphNode__Parameter::paint (juce::Graphics& g)
     }
     
     juce::Path pill;
-    
-    
     
     auto bounds = getLocalBounds();
     
@@ -361,19 +424,38 @@ juce::Rectangle<float> GraphNode__Parameter::getPillRect()
 
 void GraphNode__Parameter::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-
+    constLabel.setBounds(getPillRect().toNearestInt());
 }
 
 void GraphNode__Parameter::mouseDown(const juce::MouseEvent &event)
 {
+    onDragStart();
+}
+
+void GraphNode__Parameter::mouseDoubleClick(const juce::MouseEvent &event)
+{
+    if (inputOrOutput == InputOrOutput::Output) return;
+    setConstValue(constValue);
+    setIsConst(true);
+    onSetIsConst(isConst);
     
+//    constLabel.grabKeyboardFocus(); //TODO: this doesn't work, but something like it should hopefully work if i can find out how to do it without making myself cry real tears
 }
 
 void GraphNode__Parameter::mouseDrag(const juce::MouseEvent &event)
 {
-    
+    // i really don't know why i have to do this double negation but it works so im happy
+    onDrag(getLocalPoint(getParentComponent()->getParentComponent(), event.getPosition().toFloat() * -1) * -1);
+}
+
+void GraphNode__Parameter::mouseUp(const juce::MouseEvent &event)
+{
+    onDragEnd(getLocalPoint(getParentComponent()->getParentComponent(), event.getPosition().toFloat() * -1) * -1);
+}
+
+bool GraphNode__Parameter::hitTest(int x, int y)
+{
+    return getPillRect().contains(x, y);
 }
 
 GraphNode__RemoveButton::GraphNode__RemoveButton(GraphNode& parent) : owner(parent)
@@ -389,42 +471,15 @@ GraphNode__RemoveButton::~GraphNode__RemoveButton()
 
 void GraphNode__RemoveButton::paint (juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
-//    g.setColour (juce::Colours::grey);
-//    g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
-
     g.setColour (juce::Colour(0xbfFFFFFF));
     
     const float lineThicknesss = 1.3f;
     const float padding = 9.0f;
     
     auto crossRect = getLocalBounds().reduced(padding);
-    
-//    juce::Line<float> line;
-//    
-//    line.setStart(crossRect.getTopLeft().toFloat());
-//    line.setEnd(crossRect.getBottomRight().toFloat());
-//
-//    g.drawLine(line, lineThicknesss);
-//    
-//    line.setStart(crossRect.getTopRight().toFloat());
-//    line.setEnd(crossRect.getBottomLeft().toFloat());
-//    
-//    g.drawLine(line, lineThicknesss);
-    
+
     g.drawLine(crossRect.getX(), crossRect.getY(), crossRect.getRight(), crossRect.getBottom(), lineThicknesss);
     g.drawLine(crossRect.getRight(), crossRect.getY(), crossRect.getX(), crossRect.getBottom(), lineThicknesss);
-    
-    
-//    g.setFont (juce::FontOptions (14.0f));
-//    g.drawText ("x", getLocalBounds(),
-//                juce::Justification::centred, true);   // draw some placeholder text
 }
 
 void GraphNode__RemoveButton::resized()

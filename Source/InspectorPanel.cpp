@@ -182,7 +182,7 @@ InspectorPanel__Param::InspectorPanel__Param() : font(juce::FontOptions(textHeig
     
     fieldLabel.onTextChange = [this] ()
     {
-        handleInput(fieldLabel.getText());
+        handleInput(fieldLabel.getText()); // TODO: validate input as a float
     };
 
 }
