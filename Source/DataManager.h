@@ -54,9 +54,9 @@ struct Parameter
         
     }
     
-    ~Parameter()
-    {
-    }
+    virtual ~Parameter() { }
+    
+    virtual juce::XmlElement* serialise(int i) = 0;
 };
 
 struct InputParameter : Parameter {
@@ -74,6 +74,73 @@ struct InputParameter : Parameter {
         isConst = other.isConst;
         constValue = other.constValue;
         streamId = other.streamId;
+    }
+    
+    juce::XmlElement* serialise(int i) override
+    {
+        auto output = new juce::XmlElement("inputParam");
+        
+        auto friendlyNameElement = new juce::XmlElement("friendlyName");
+        friendlyNameElement->addTextElement(juce::String(friendlyName));
+
+        auto nameElement = new juce::XmlElement("name");
+        nameElement->addTextElement(juce::String(name));
+        
+        auto typeElement = new juce::XmlElement("type");
+        typeElement->addTextElement(type == ParameterType::Audio ? "audio" : "value");
+        
+        if (streamId != -1)
+        {
+            auto streamIdElement = new juce::XmlElement("streamId");
+            streamIdElement->addTextElement(juce::String(streamId));
+            
+            output->addChildElement(streamIdElement);
+        }
+        
+        
+        if (isConst)
+        {
+            auto constValueElement = new juce::XmlElement("constValue");
+            constValueElement->addTextElement(juce::String(constValue));
+            
+            output->addChildElement(constValueElement); // it knows if its const if it has a constValue thingo
+        }
+        
+        
+        auto paramIdElement = new juce::XmlElement("paramId");
+        paramIdElement->addTextElement(juce::String(i));
+        
+        output->addChildElement(friendlyNameElement);
+        output->addChildElement(nameElement);
+        output->addChildElement(typeElement);
+        output->addChildElement(paramIdElement);
+        
+        return output;
+    }
+    
+    void deserialise(juce::XmlElement* elem)
+    {
+        auto friendlyNameElement = elem->getChildByName("friendlyName");
+        friendlyName = friendlyNameElement->getAllSubText();
+    
+        auto nameElement = elem->getChildByName("name");
+        name = nameElement->getAllSubText();
+        
+        auto typeElement = elem->getChildByName("type");
+        type = typeElement->getAllSubText() == "audio" ? ParameterType::Audio : ParameterType::Value;
+        
+        juce::XmlElement* relevantChild = nullptr;
+        
+        if ((relevantChild = elem->getChildByName("streamId")) != nullptr)
+        {
+            isConst = false;
+            
+            streamId = relevantChild->getAllSubText().getIntValue();
+        } else if ((relevantChild = elem->getChildByName("constValue")) != nullptr) {
+            isConst = true;
+            streamId = -1;
+            constValue = relevantChild->getAllSubText().getFloatValue();
+        }
     }
 };
 
@@ -105,6 +172,63 @@ struct OutputParameter : Parameter {
         
         return false;
     }
+    
+    juce::XmlElement* serialise(int i) override
+    {
+        auto output = new juce::XmlElement("outputParam");
+        
+        auto friendlyNameElement = new juce::XmlElement("friendlyName");
+        friendlyNameElement->addTextElement(juce::String(friendlyName));
+
+        auto nameElement = new juce::XmlElement("name");
+        nameElement->addTextElement(juce::String(name));
+        
+        auto typeElement = new juce::XmlElement("type");
+        typeElement->addTextElement(type == ParameterType::Audio ? "audio" : "value");
+        
+        auto streamIdsElement = new juce::XmlElement("streamIds");
+        
+        for (int i = 0; i < 8; i++)
+        {
+            if (streamIds[i] == -1) continue;
+            
+            auto elem = new juce::XmlElement("streamId");
+            elem->addTextElement(juce::String(streamIds[i]));
+            
+            streamIdsElement->addChildElement(elem);
+        }
+        
+        auto paramIdElement = new juce::XmlElement("paramId");
+        paramIdElement->addTextElement(juce::String(i));
+        
+        output->addChildElement(friendlyNameElement);
+        output->addChildElement(nameElement);
+        output->addChildElement(typeElement);
+        output->addChildElement(streamIdsElement);
+        output->addChildElement(paramIdElement);
+        
+        return output;
+    }
+    
+    void deserialise(juce::XmlElement* elem)
+    {
+        auto friendlyNameElement = elem->getChildByName("friendlyName");
+        friendlyName = friendlyNameElement->getAllSubText();
+    
+        auto nameElement = elem->getChildByName("name");
+        name = nameElement->getAllSubText();
+        
+        auto typeElement = elem->getChildByName("type");
+        type = typeElement->getAllSubText() == "audio" ? ParameterType::Audio : ParameterType::Value;
+        
+        
+        int streamIdId = 0;
+        auto streamIdsElement = elem->getChildByName("streamIds");
+        for (auto child : streamIdsElement->getChildIterator())
+        {
+            streamIds[streamIdId++] = child->getAllSubText().getIntValue();
+        }
+    }
 };
 
 struct Stream {
@@ -135,6 +259,54 @@ class Node
 public:
     Node() {};
     Node(juce::String& name) { friendlyName = name; };
+    Node(juce::XmlElement* elem)
+    {
+        if (elem == nullptr) return;
+        
+        isActive = true;
+//
+//        for (int i = 0; i < NUM_PARAMS; i++)
+//        {
+//            if (!inputParams[i].isActive) break;
+//            output->addChildElement(inputParams[i].serialise(i));
+//        }
+//        
+//        
+//        for (int i = 0; i < NUM_PARAMS; i++)
+//        {
+//            if (!outputParams[i].isActive) break;
+//            output->addChildElement(outputParams[i].serialise(i));
+//        }
+        
+        auto isGlobalLockedNodeElement = elem->getChildByName("isGlobalLockedNode");
+        isGlobalLockedNode = isGlobalLockedNodeElement->getAllSubText() == "true";
+        
+        auto hasInputSideElement = elem->getChildByName("hasInputSide");
+        hasInputSide = hasInputSideElement->getAllSubText() == "true";
+        
+        auto hasOutputSideElement = elem->getChildByName("hasOutputSide");
+        hasOutputSide = hasOutputSideElement->getAllSubText() == "true";
+        
+        auto friendlyNameElement = elem->getChildByName("friendlyName");
+        friendlyName = friendlyNameElement->getAllSubText();
+        
+        auto positionElement = elem->getChildByName("position");
+        auto xElement = positionElement->getChildByName("x");
+        auto yElement = positionElement->getChildByName("y");
+        
+        position.setX(xElement->getAllSubText().getFloatValue());
+        position.setY(yElement->getAllSubText().getFloatValue());
+        
+        for (auto inputParamElement : elem->getChildWithTagNameIterator("inputParam"))
+        {
+            inputParams[inputParamElement->getChildByName("paramId")->getAllSubText().getIntValue()].deserialise(inputParamElement);
+        }
+        
+        for (auto outputParamElement : elem->getChildWithTagNameIterator("outputParam"))
+        {
+            outputParams[outputParamElement->getChildByName("paramId")->getAllSubText().getIntValue()].deserialise(outputParamElement);
+        }
+    }
     virtual ~Node() {};
     
     bool isActive = false; // TODO: this doesn't seem necessary now that inactive nodes are nullptr?
@@ -143,26 +315,79 @@ public:
     juce::String friendlyName;
     juce::Point<float> position;
     
-    virtual NodeType getType() = 0;
-    virtual Node* getCopy() = 0;
-    
     bool isGlobalLockedNode = false;
     bool hasInputSide = true;
     bool hasOutputSide = true;
+    
+    juce::XmlElement* serialise()
+    {
+        auto output = new juce::XmlElement("node");
+        
+        auto typeElement = new juce::XmlElement("type");
+        typeElement->addTextElement(juce::String(getType()));
+        
+        auto isGlobalLockedNodeElement = new juce::XmlElement("isGlobalLockedNode");
+        isGlobalLockedNodeElement->addTextElement(isGlobalLockedNode ? "true" : "false");
+        
+        auto hasInputSideElement = new juce::XmlElement("hasInputSide");
+        hasInputSideElement->addTextElement(hasInputSide ? "true" : "false");
+        
+        auto hasOutputSideElement = new juce::XmlElement("hasOutputSide");
+        hasOutputSideElement->addTextElement(hasOutputSide ? "true" : "false");
+        
+        auto friendlyNameElement = new juce::XmlElement("friendlyName");
+        friendlyNameElement->addTextElement(friendlyName);
+        
+        auto positionElement = new juce::XmlElement("position");
+        
+        auto positionXElement = new juce::XmlElement("x");
+        auto positionYElement = new juce::XmlElement("y");
+        positionXElement->addTextElement(juce::String(position.getX()));
+        positionYElement->addTextElement(juce::String(position.getY()));
+        
+        positionElement->addChildElement(positionXElement);
+        positionElement->addChildElement(positionYElement);
+        
+        output->addChildElement(typeElement);
+        output->addChildElement(isGlobalLockedNodeElement);
+        output->addChildElement(hasInputSideElement);
+        output->addChildElement(hasOutputSideElement);
+        output->addChildElement(friendlyNameElement);
+        output->addChildElement(positionElement);
+        
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            if (!inputParams[i].isActive) break;
+            output->addChildElement(inputParams[i].serialise(i));
+        }
+        
+        
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            if (!outputParams[i].isActive) break;
+            output->addChildElement(outputParams[i].serialise(i));
+        }
+        
+        return output;
+    }
+    
+    virtual NodeType getType() = 0;
+    virtual Node* getCopy() = 0;
 };
 
 class MainInputNode : public Node
 {
 public:
-    MainInputNode() 
-    {
+    MainInputNode() : MainInputNode(nullptr) { };
+    
+    MainInputNode(juce::XmlElement* elem) : Node(elem) {
         isGlobalLockedNode = true;
         hasInputSide = false;
         
         outputParams[0].isActive = true;
         outputParams[0].friendlyName = "In";
         outputParams[0].type = ParameterType::Audio;
-    }
+    };
     
     juce::AudioBuffer<float>* mainInput;
     
@@ -173,15 +398,16 @@ public:
 class MainOutputNode : public Node
 {
 public:
-    MainOutputNode()
-    {
+    MainOutputNode() : MainOutputNode(nullptr) { };
+    
+    MainOutputNode(juce::XmlElement* elem) : Node(elem) {
         isGlobalLockedNode = true;
         hasOutputSide = false;
         
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "Out";
         inputParams[0].type = ParameterType::Audio;
-    }
+    };
     
     NodeType getType() {return NodeType::MainOutput;}
     Node* getCopy() {return new MainOutputNode(*this);}
@@ -190,8 +416,9 @@ public:
 class GainNode : public Node
 {
 public:
-    GainNode()
-    {
+    GainNode() : GainNode(nullptr) { };
+    
+    GainNode(juce::XmlElement* elem) : Node(elem) {
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -203,7 +430,7 @@ public:
         outputParams[0].isActive = true;
         outputParams[0].friendlyName = "Out";
         outputParams[0].type = ParameterType::Audio;
-    }
+    };
     
     NodeType getType() {return NodeType::Gain;}
     Node* getCopy() {return new GainNode(*this);}
@@ -212,8 +439,9 @@ public:
 class LevelNode : public Node
 {
 public:
-    LevelNode()
-    {
+    LevelNode() : LevelNode(nullptr) { };
+    
+    LevelNode(juce::XmlElement* elem) : Node(elem) {
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -225,7 +453,7 @@ public:
         outputParams[1].isActive = true;
         outputParams[1].friendlyName = "dbFS";
         outputParams[1].type = ParameterType::Value;
-    }
+    };
     
     NodeType getType() {return NodeType::Level;}
     Node* getCopy() {return new LevelNode(*this);}
@@ -234,8 +462,9 @@ public:
 class CorrelationNode : public Node
 {
 public:
-    CorrelationNode()
-    {
+    CorrelationNode() : CorrelationNode(nullptr) { };
+    
+    CorrelationNode(juce::XmlElement* elem) : Node(elem) {
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -243,7 +472,7 @@ public:
         outputParams[0].isActive = true;
         outputParams[0].friendlyName = "Correlation";
         outputParams[0].type = ParameterType::Value;
-    }
+    };
     
     NodeType getType() {return NodeType::Correlation;}
     Node* getCopy() {return new CorrelationNode(*this);}
@@ -252,8 +481,11 @@ public:
 class LoudnessNode : public Node
 {
 public:
-    LoudnessNode()
-    {
+    LoudnessNode() : LoudnessNode(nullptr) { };
+    
+    LoudnessNode(const LoudnessNode& ln) : Node(ln), meter(new Ebu128LoudnessMeter()) { };
+    
+    LoudnessNode(juce::XmlElement* elem) : Node(elem) {
         meter.reset(new Ebu128LoudnessMeter());
 
         inputParams[0].isActive = true;
@@ -271,12 +503,7 @@ public:
         outputParams[2].isActive = true;
         outputParams[2].friendlyName = "LUFS-I";
         outputParams[2].type = ParameterType::Value;
-    }
-    
-    LoudnessNode(const LoudnessNode& ln) : Node(ln), meter(new Ebu128LoudnessMeter()) 
-    {
-    
-    }
+    };
     
     NodeType getType() {return NodeType::Loudness;}
     Node* getCopy() {return new LoudnessNode(*this);}
@@ -334,6 +561,38 @@ struct ValueStream : Stream {
     ValueStream() : Stream(ParameterType::Value) {
         envelope = Envelope(35, 35, 44100.0);
     };
+    
+    juce::XmlElement* serialise(int i)
+    {
+        auto output = new juce::XmlElement("valueStream");
+        
+        auto streamIdElement = new juce::XmlElement("streamId");
+        streamIdElement->addTextElement(juce::String(i));
+        
+        auto envelopeElement = new juce::XmlElement("envelope");
+        
+        auto attackElement = new juce::XmlElement("attack");
+        attackElement->addTextElement(juce::String(envelope.getMsAttack()));
+        
+        auto releaseElement = new juce::XmlElement("release");
+        releaseElement->addTextElement(juce::String(envelope.getMsRelease()));
+        
+        envelopeElement->addChildElement(attackElement);
+        envelopeElement->addChildElement(releaseElement);
+        
+        output->addChildElement(envelopeElement);
+        output->addChildElement(streamIdElement);
+        
+        return output;
+    }
+    
+    void deserialise(juce::XmlElement* elem)
+    {
+        auto envelopeElement = elem->getChildByName("envelope");
+        
+        envelope.setMsAttack(envelopeElement->getChildByName("attack")->getAllSubText().getFloatValue());
+        envelope.setMsRelease(envelopeElement->getChildByName("release")->getAllSubText().getFloatValue());
+    }
 };
 
 struct DataInstance
@@ -355,12 +614,87 @@ struct DataInstance
             nodes[i] = nullptr; // maybe?
     }
     
+    void deserialise(juce::XmlElement* element)
+    {
+        DBG("deserialise");
+        int nodeId = 0;
+        
+//        auto root = element->getChildByName("dataInstance");
+        
+        DBG(element->getTagName());
+        
+        for (auto child : element->getChildIterator())
+        {
+            if (child->getTagName() == "node")
+            {
+                DBG(child->toString());
+                switch ((NodeType) child->getChildByName("type")->getAllSubText().getIntValue())
+                {
+                    case NodeType::MainInput:
+                        nodes[nodeId++] = new Data::MainInputNode(child);
+                        break;
+                    case NodeType::MainOutput:
+                        nodes[nodeId++] = new Data::MainOutputNode(child);
+                        break;
+                    case NodeType::Gain:
+                        nodes[nodeId++] = new Data::GainNode(child);
+                        break;
+                    case NodeType::Level:
+                        nodes[nodeId++] = new Data::LevelNode(child);
+                        break;
+                    case NodeType::Correlation:
+                        nodes[nodeId++] = new Data::CorrelationNode(child);
+                        break;
+                    case NodeType::Loudness:
+                        nodes[nodeId++] = new Data::LoudnessNode(child);
+                        
+                }
+                
+            } else if (child->getTagName() == "valueStream")
+            {
+                valueStreams[child->getChildByName("streamId")->getAllSubText().getIntValue()].deserialise(child);
+            } else
+            {
+                DBG("DataInstance deserialisation – Unknown tagName" << child->getTagName());
+            }
+        }
+        
+        for (int i = nodeId; i < NUM_NODES; i++)
+        {
+            nodes[i] = nullptr;
+        }
+        
+        prepareStreams();
+    }
+    
     ~DataInstance()
     {
         for (int i = 0; i < NUM_NODES; i++) // manual construction because im being naughty and using raw pointers
         {
             delete nodes[i];
         }
+    }
+    
+    juce::XmlElement* serialise()
+    {
+        prepareStreams();
+        
+        auto output = new juce::XmlElement("dataInstance");
+        
+        for (int i = 0; i < NUM_NODES; i++)
+        {
+            if (nodes[i] == nullptr || !nodes[i]->isActive) break;
+            output->addChildElement(nodes[i]->serialise());
+        }
+        
+        for (int i = 0; i < NUM_VALUE_STREAMS; i++)
+        {
+            if (valueStreams[i].inputNodeId == -1 || valueStreams[i].outputNodeId == -1) break;
+            
+            output->addChildElement(valueStreams[i].serialise(i));
+        }
+        
+        return output;
     }
     
     void prepareStreams();

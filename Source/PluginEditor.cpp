@@ -19,83 +19,7 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
     dataManager = d;
     
     addAndMakeVisible(m_graphAreaNodeContainer);
-    for (int nodeId = 0; nodeId < NUM_NODES; nodeId++) // TODO: put this in a function because all this will need to be repeated when i add nodes using the UI
-    {
-        auto& node = dataManager->activeInstance->nodes[nodeId];
-        
-        if (node == nullptr || !node->isActive) break;
-        
-        auto* n = new Common::Node();
-        
-        n->component.reset(new GraphNode(dataManager, nodeId, draggableArea));
-        
-        m_graphAreaNodeContainer.addAndMakeVisible(n->component.get());
-        n->component->setBounds(node->position.x, node->position.y, node->hasInputSide && node->hasOutputSide ? 300 : 150, n->component->getIdealHeight());
-        
-        graphNodes.add(n);
-        
-        
-        n->component->onMove = [this] () {
-            m_graphAreaStreams.repaint();
-        };
-        
-        n->component->onDataUpdate = [this] () {
-//            dataManager->startEditing();
-            
-            // do the stuff
-            
-//            dataManager->finishEditing();
-        };
-        
-        n->component->onRemove = [this, nodeId, n] () {
-            dataManager->startEditing();
-            dataManager->removeNode(nodeId);
-            dataManager->finishEditing();
-            
-            // bump all node ids for node components
-            
-            graphNodes.removeObject(n);
-            
-            for (auto node : graphNodes)
-            {
-                if (node->component->getNodeId() > nodeId)
-                    node->component->setNodeId(node->component->getNodeId() - 1);
-            }
-            
-            m_graphAreaStreams.repaint();
-        };
-        
-        n->component->getCollidingRects = [this] (GraphNode& graphNode, float padding) -> juce::Array<juce::Rectangle<float>>
-        {
-            auto thisBounds = graphNode.getBounds().toFloat();
-            
-            juce::Array<juce::Rectangle<float>> out;
-            
-            for (auto node : graphNodes)
-            {
-                if (node->component.get() == &graphNode) continue;
-                
-                auto b = node->component->getBounds().toFloat().expanded(padding);
-                
-                if (thisBounds.intersects(b))
-                    out.add(b);
-            }
-            
-            return out;
-        };
-        
-        n->component->onDragStreamStart = [this, nodeId] (InputOrOutput inputOrOutput, int paramId) {
-            m_graphAreaStreams.handleStartDragStream(nodeId, inputOrOutput, paramId);
-        };
-        
-        n->component->onDragStream = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
-            m_graphAreaStreams.handleDragStreamMove(position);
-        };
-        
-        n->component->onDragStreamEnd = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
-            m_graphAreaStreams.handleDragStreamEnd(position);
-        };
-    }
+    resetNodes();
     
     addAndMakeVisible(m_graphAreaStreams);
     m_graphAreaStreams.handleSelectStream = [this] (ParameterType type, int streamId) {
@@ -122,6 +46,98 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
 
 FXGraphAudioProcessorEditor::~FXGraphAudioProcessorEditor()
 {
+    
+}
+
+void FXGraphAudioProcessorEditor::addNode(Data::Node *&node, int nodeId)
+{
+    auto* n = new Common::Node();
+    
+    n->component.reset(new GraphNode(dataManager, nodeId, draggableArea));
+    
+    m_graphAreaNodeContainer.addAndMakeVisible(n->component.get());
+    n->component->setBounds(node->position.x, node->position.y, node->hasInputSide && node->hasOutputSide ? 300 : 150, n->component->getIdealHeight());
+    
+    graphNodes.add(n);
+    
+    
+    n->component->onMove = [this] () {
+        m_graphAreaStreams.repaint();
+    };
+    
+    n->component->onDataUpdate = [this] () {
+//            dataManager->startEditing();
+        
+        // do the stuff
+        
+//            dataManager->finishEditing();
+    };
+    
+    n->component->onRemove = [this, n] () {
+        int nodeId = n->component->getNodeId();
+        
+        dataManager->startEditing();
+        dataManager->removeNode(nodeId);
+        dataManager->finishEditing();
+        
+        // bump all node ids for node components
+        
+        graphNodes.removeObject(n);
+        
+        for (auto node : graphNodes)
+        {
+            if (node->component->getNodeId() > nodeId)
+                node->component->setNodeId(node->component->getNodeId() - 1);
+        }
+        
+        m_graphAreaStreams.repaint();
+    };
+    
+    n->component->getCollidingRects = [this] (GraphNode& graphNode, float padding) -> juce::Array<juce::Rectangle<float>>
+    {
+        auto thisBounds = graphNode.getBounds().toFloat();
+        
+        juce::Array<juce::Rectangle<float>> out;
+        
+        for (auto node : graphNodes)
+        {
+            if (node->component.get() == &graphNode) continue;
+            
+            auto b = node->component->getBounds().toFloat().expanded(padding);
+            
+            if (thisBounds.intersects(b))
+                out.add(b);
+        }
+        
+        return out;
+    };
+    
+    n->component->onDragStreamStart = [this, nodeId] (InputOrOutput inputOrOutput, int paramId) {
+        m_graphAreaStreams.handleStartDragStream(nodeId, inputOrOutput, paramId);
+    };
+    
+    n->component->onDragStream = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
+        m_graphAreaStreams.handleDragStreamMove(position);
+    };
+    
+    n->component->onDragStreamEnd = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
+        m_graphAreaStreams.handleDragStreamEnd(position);
+    };
+}
+
+void FXGraphAudioProcessorEditor::resetNodes()
+{
+    graphNodes.clear();
+    
+    for (int nodeId = 0; nodeId < NUM_NODES; nodeId++) // TODO: put this in a function because all this will need to be repeated when i add nodes using the UI and also when i add nodes from data load stuff
+    {
+        auto& node = dataManager->activeInstance->nodes[nodeId];
+        
+        if (node == nullptr || !node->isActive) break;
+        
+        addNode(node, nodeId);
+    }
+    
     
 }
 

@@ -431,13 +431,6 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
     {
         case NodeType::MainInput:
             node = new Data::MainInputNode();
-            
-            node->isGlobalLockedNode = true;
-            node->hasInputSide = false;
-            
-            node->outputParams[0].isActive = true;
-            node->outputParams[0].friendlyName = "In";
-            node->outputParams[0].type = ParameterType::Audio;
             break;
         case NodeType::MainOutput:
             node = new Data::MainOutputNode();

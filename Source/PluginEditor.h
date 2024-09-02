@@ -28,12 +28,16 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    void resetNodes();
 
 private:
     
     void setSelection(ParameterType type, int streamId); // sets selection to a specific stream
     void setSelection(int nodeId); // sets selection to a specific node
     void setSelection(); // clear selection
+    
+    void addNode(Data::Node*& node, int nodeId);
     
     bool streamSelected;
     ParameterType selectedStreamType;
