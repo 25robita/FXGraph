@@ -4,6 +4,62 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HnWc0u" name="FXGraph">
     <GROUP id="{2D4AB358-7276-2151-C7AB-B52088DECFC4}" name="Source">
+      <GROUP id="{399CC02E-F910-911B-A57E-AC057CA8B51F}" name="exprtk">
+        <FILE id="L7l51E" name="exprtk.hpp" compile="0" resource="0" file="Source/exprtk/exprtk.hpp"/>
+        <FILE id="fxPcyg" name="exprtk_benchmark.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_benchmark.cpp"/>
+        <FILE id="zX7oz7" name="exprtk_simple_example_01.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_01.cpp" xcodeResource="0"/>
+        <FILE id="QxLD0i" name="exprtk_simple_example_02.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_02.cpp"/>
+        <FILE id="eT7cpT" name="exprtk_simple_example_03.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_03.cpp"/>
+        <FILE id="idOmqX" name="exprtk_simple_example_04.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_04.cpp"/>
+        <FILE id="K9a3OS" name="exprtk_simple_example_05.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_05.cpp"/>
+        <FILE id="QAuwT4" name="exprtk_simple_example_06.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_06.cpp"/>
+        <FILE id="c2GgX4" name="exprtk_simple_example_07.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_07.cpp"/>
+        <FILE id="DHvn6R" name="exprtk_simple_example_08.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_08.cpp"/>
+        <FILE id="LcBLFX" name="exprtk_simple_example_09.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_09.cpp"/>
+        <FILE id="RbBQgu" name="exprtk_simple_example_10.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_10.cpp"/>
+        <FILE id="N0CqvD" name="exprtk_simple_example_11.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_11.cpp"/>
+        <FILE id="YyZZGQ" name="exprtk_simple_example_12.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_12.cpp"/>
+        <FILE id="X2satM" name="exprtk_simple_example_13.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_13.cpp"/>
+        <FILE id="wA3a5d" name="exprtk_simple_example_14.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_14.cpp"/>
+        <FILE id="MlsOjW" name="exprtk_simple_example_15.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_15.cpp"/>
+        <FILE id="cwIVXM" name="exprtk_simple_example_16.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_16.cpp"/>
+        <FILE id="bChCey" name="exprtk_simple_example_17.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_17.cpp"/>
+        <FILE id="ojMmEU" name="exprtk_simple_example_18.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_18.cpp"/>
+        <FILE id="rAcbhD" name="exprtk_simple_example_19.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_19.cpp"/>
+        <FILE id="h9JSL5" name="exprtk_simple_example_20.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_20.cpp"/>
+        <FILE id="Rnk3Pp" name="exprtk_simple_example_21.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_21.cpp"/>
+        <FILE id="duDzWA" name="exprtk_simple_example_22.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_22.cpp"/>
+        <FILE id="UjLMeL" name="exprtk_simple_example_23.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_23.cpp"/>
+        <FILE id="qMzJrC" name="exprtk_simple_example_24.cpp" compile="0" resource="0"
+              file="Source/exprtk/exprtk_simple_example_24.cpp"/>
+        <FILE id="YMLlOX" name="exprtk_test.cpp" compile="0" resource="0" file="Source/exprtk/exprtk_test.cpp"/>
+        <FILE id="uh0bTd" name="Makefile" compile="0" resource="0" file="Source/exprtk/Makefile"/>
+        <FILE id="rMdJHN" name="readme.txt" compile="0" resource="0" file="Source/exprtk/readme.txt"/>
+      </GROUP>
       <GROUP id="{197117DA-560E-117A-787A-7C2134154F43}" name="LUFSMeter">
         <GROUP id="{D6727DD0-8841-6CA6-8BAB-66808E9D988C}" name="docs">
           <GROUP id="{3AB980F8-DDC4-5D86-FE23-6CE77CFD3B39}" name="developmentNotes">
@@ -156,7 +212,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="0">
+    <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="FXGraph"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="FXGraph"/>

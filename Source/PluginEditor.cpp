@@ -127,6 +127,11 @@ void FXGraphAudioProcessorEditor::addNode(Data::Node *&node, int nodeId)
 
 void FXGraphAudioProcessorEditor::resetNodes()
 {
+    for (auto node : graphNodes)
+    {
+        node->component.reset();
+    }
+    
     graphNodes.clear();
     
     for (int nodeId = 0; nodeId < NUM_NODES; nodeId++) // TODO: put this in a function because all this will need to be repeated when i add nodes using the UI and also when i add nodes from data load stuff

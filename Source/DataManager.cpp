@@ -356,6 +356,57 @@ void Data::DataInstance::evaluate(int nodeId)
             }
         }
             break;
+        case NodeType::Maths:
+        {
+            auto mathsNode = static_cast<Data::MathsNode*>(node);
+            
+//            for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
+//            {
+//                if (!node->inputParams[paramId].isActive) break;
+//                
+//                if (node->inputParams[paramId].isConst)
+//                {
+//                    mathsNode->setInputValue(paramId, node->inputParams[paramId].constValue);
+//                    continue;
+//                }
+//                
+//                mathsNode->setInputValue(paramId, valueStreams[node->inputParams[paramId].streamId].value);
+//            }
+            
+//            mathsNode->setInputValue(0, node->inputParams[0].constValue);
+            
+            mathsNode->input0 = node->inputParams[0].constValue;
+            
+            
+            
+//            mathsNode->registerSymbols();
+            
+//            mathsNode->symbols.clear();
+//            
+//            const float a = 1;
+//            
+//            mathsNode->symbols.add_constant("input1", a);
+//            mathsNode->symbols.add_constants();
+//            
+//            mathsNode->expression.register_symbol_table(mathsNode->symbols);
+            
+//            mathsNode->parser.compile("input1 * 2", mathsNode->expression);
+            
+            const float value = mathsNode->expression.value();
+            
+            auto v = mathsNode->symbols.get_variable("input1");
+            
+            DBG(node->inputParams[0].constValue << " [" << (v == nullptr ? -1 : v->value()) << "] -> " << value << " (" << mathsNode->symbols.variable_count() << ")");
+            
+//            DBG(value);
+            
+            for (int streamId : node->outputParams[0].streamIds)
+            {
+                if (streamId == -1) break;
+                valueStreams[streamId].setValue(value);
+            }
+        }
+            break;
     }
 }
 
@@ -446,6 +497,10 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
             break;
         case NodeType::Loudness:
             node = new Data::LoudnessNode();
+            break;
+        case NodeType::Maths:
+            node = new Data::MathsNode();
+            break;
     }
     
     if (node == nullptr)

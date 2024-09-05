@@ -12,6 +12,7 @@
 #include "JuceHeader.h"
 #include "Envelope.h"
 #include "LUFSMeter/Ebu128LoudnessMeter.h"
+#include "exprtk/exprtk.hpp"
 
 enum ParameterType
 {
@@ -27,7 +28,19 @@ enum NodeType
     Level = 3,
     Correlation = 4,
     Loudness = 5,
+    Maths = 6,
 };
+
+/**
+ 
+ TODO: add new node type, Maths
+ - using ExprTK
+ - each MathsNode will have one ExprTK expression<float>, and one value output
+ - through the inspector, the user will be able to add and name inputs how they wish (up to 16 ofc), as well as altering the expression text, which is stored as a string
+ - syntax highlighting??
+ - this expression stuff will all only be evaluated on change to the number of params or their names; else they will stay compiled (or however that works) for high efficiency
+ 
+ */
 
 const int NUM_NODES = 64;
 const int NUM_AUDIO_STREAMS = 128;
@@ -511,6 +524,178 @@ public:
     std::unique_ptr<Ebu128LoudnessMeter> meter;
 };
 
+class MathsNode : public Node
+{
+public:
+    MathsNode() : MathsNode(nullptr) { };
+    
+    MathsNode(const MathsNode& ln) : Node(ln) { };
+    
+    MathsNode(juce::XmlElement* elem) : Node(elem) {
+        if (elem == nullptr) // else the things will be preset by Node constructor
+        {
+            inputParams[0].isActive = true;
+            inputParams[0].friendlyName = "Input 1";
+            inputParams[0].name = "input1";
+            inputParams[0].type = ParameterType::Value;
+        }
+                
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "Output";
+        outputParams[0].type = ParameterType::Value;
+        
+        registerSymbols();
+        
+        expr_str = "input1 * 2";
+        
+        parser.compile(expr_str, expression);
+    };
+    
+    void registerSymbols()
+    {
+//        symbols.clear();
+        
+//        for (int i = 0; i < NUM_PARAMS; i++)
+//        {
+//            if (!inputParams[i].isActive) break;
+////            DBG("p" << i << " " << inputParams[i].name << " = " << inputs[i]);
+//            
+//            DBG("\"" << inputParams[i].name.toStdString() << "\"");
+//            symbols.add_variable(inputParams[i].name.toStdString(), getInputValue(i));
+//        }
+        
+        symbols.add_variable("input1", input0);
+        DBG("done this so it should preferably work");
+        
+        if (expression.num_symbol_tables() == 0)
+        {
+            expression.register_symbol_table(symbols);
+        }
+    }
+    
+    void setInputValue(int index, float value)
+    {
+        switch (index)
+        {
+            case 0:
+                input0 = value;
+                return;
+            case 1:
+                input1 = value;
+                return;
+            case 2:
+                input2 = value;
+                return;
+            case 3:
+                input3 = value;
+                return;
+            case 4:
+                input4 = value;
+                return;
+            case 5:
+                input5 = value;
+                return;
+            case 6:
+                input6 = value;
+                return;
+            case 7:
+                input7 = value;
+                return;
+            case 8:
+                input8 = value;
+                return;
+            case 9:
+                input9 = value;
+                return;
+            case 10:
+                input10 = value;
+                return;
+            case 11:
+                input11 = value;
+                return;
+            case 12:
+                input12 = value;
+                return;
+            case 13:
+                input13 = value;
+                return;
+            case 14:
+                input14 = value;
+                return;
+            case 15:
+                input15 = value;
+                return;
+        }
+    }
+    
+    float& getInputValue(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return input0;
+            case 1:
+                return input1;
+            case 2:
+                return input2;
+            case 3:
+                return input3;
+            case 4:
+                return input4;
+            case 5:
+                return input5;
+            case 6:
+                return input6;
+            case 7:
+                return input7;
+            case 8:
+                return input8;
+            case 9:
+                return input9;
+            case 10:
+                return input10;
+            case 11:
+                return input11;
+            case 12:
+                return input12;
+            case 13:
+                return input13;
+            case 14:
+                return input14;
+            case 15:
+                return input15;
+        }
+    }
+    
+    NodeType getType() {return NodeType::Maths;}
+    Node* getCopy() {return new MathsNode(*this);}
+    
+    exprtk::symbol_table<float> symbols;
+    exprtk::expression<float> expression;
+    exprtk::parser<float> parser;
+    
+    std::string expr_str;
+    
+    
+    // dont @ me it wasnt working as an array so i fixed it :) im very tired :)
+    float input0;
+    float input1;
+    float input2;
+    float input3;
+    float input4;
+    float input5;
+    float input6;
+    float input7;
+    float input8;
+    float input9;
+    float input10;
+    float input11;
+    float input12;
+    float input13;
+    float input14;
+    float input15;
+};
+
 struct AudioStream : Stream {
     juce::AudioBuffer<float> buffer;
     
@@ -647,7 +832,10 @@ struct DataInstance
                         break;
                     case NodeType::Loudness:
                         nodes[nodeId++] = new Data::LoudnessNode(child);
-                        
+                        break;
+                    case NodeType::Maths:
+                        nodes[nodeId++] = new Data::MathsNode(child);
+                        break;
                 }
                 
             } else if (child->getTagName() == "valueStream")

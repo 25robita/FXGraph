@@ -39,6 +39,8 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     
     dataManager->addNode(3, NodeType::Level, "Level", {100, 300});
     
+    dataManager->addNode(4, NodeType::Maths, "Maths", {500,500});
+    
     dataManager->inactiveInstance->nodes[3]->inputParams[0].streamId = 1;
 //    dataManager->inactiveInstance->nodes[3]->outputParams[1].streamIds[0] = 0;
     
@@ -251,6 +253,8 @@ void FXGraphAudioProcessor::setStateInformation (const void* data, int sizeInByt
     // whose contents will have been created by the getStateInformation() call.
     
     auto xml = getXmlFromBinary(data, sizeInBytes);
+    
+//    DBG(xml->toString());
     
     if (xml->getNumChildElements() == 0) return;
     
