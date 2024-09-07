@@ -989,6 +989,15 @@ public:
     
     bool isEditing() {return editing;};
     
+    bool isProcessing() {return processing;}
+    
+    void startProcessing() {
+        processing = true;
+    }
+    
+    void finishProcessing() {
+        processing = false;
+    }
 private:
     Data::DataInstance a;
     Data::DataInstance b;
@@ -996,6 +1005,8 @@ private:
     bool editing;
     bool changeQueued;
     bool oneTimeListenerFlag = false;
+    
+    bool processing;
     
     std::function<void()> oneTimeRealisationListener = [] () {};
     std::function<void()> realisationListener = [] () {};

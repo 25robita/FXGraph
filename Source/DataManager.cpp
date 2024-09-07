@@ -718,6 +718,8 @@ void DataManager::finishEditing()
     editing = false;
     
     changeQueued = true;
+    
+    if (!isProcessing()) realise();
 }
 
 void DataManager::realise()

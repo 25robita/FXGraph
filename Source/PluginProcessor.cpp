@@ -163,6 +163,7 @@ bool FXGraphAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 
 void FXGraphAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    dataManager->startProcessing();
     dataManager->realise();
     
     juce::ScopedNoDenormals noDenormals;
@@ -191,6 +192,8 @@ void FXGraphAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     {
         buffer.copyFrom(channel, 0, b, channel, 0, buffer.getNumSamples());
     }
+    
+    dataManager->finishProcessing();
 }
 
 //==============================================================================

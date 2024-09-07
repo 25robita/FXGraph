@@ -12,10 +12,14 @@
 #include "DataManager.h"
 #include "SideMenu.h"
 
+static std::unique_ptr<FXGraphAudioProcessor> globalProcessorPointer; // so very debug
+
 //==============================================================================
 FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor& p, std::shared_ptr<DataManager> d)
 : AudioProcessorEditor (&p), audioProcessor (p), m_sideMenu(d), m_graphAreaStreams(graphNodes, d)
 {
+    globalProcessorPointer.reset(&p);
+    
     dataManager = d;
     
     std::function<void()> a = [this] () {
@@ -195,10 +199,6 @@ void FXGraphAudioProcessorEditor::resized()
         draggableArea.setLeft(300); // hardcoded side-panel width
     }
     
-    
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
-    
     auto menuBounds = getLocalBounds();
     
     menuBounds.setRight(300 + 50);
@@ -236,6 +236,8 @@ void FXGraphAudioProcessorEditor::setSelection(ParameterType type, int streamId)
 
 void FXGraphAudioProcessorEditor::setSelection(int nodeId)
 {
+    selectedNodeId = nodeId;
+    
     if (nodeSelected)
     {
         graphNodes[selectedNodeId]->component->setSelected(false);
@@ -243,8 +245,6 @@ void FXGraphAudioProcessorEditor::setSelection(int nodeId)
     
     streamSelected = false;
     nodeSelected = true;
-    
-    selectedNodeId = nodeId;
     
     m_graphAreaStreams.selectStream();
     

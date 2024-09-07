@@ -78,8 +78,8 @@ void AnalysisGraphContent::paint (juce::Graphics& g)
             g.strokePath(p, juce::PathStrokeType(1.0f));
             
             // TODO: add + sign for positive values
-            auto topText = juce::String::toDecimalStringWithSignificantFigures(-graphPath.getBounds().getY(), 3);
-            auto bottomText = juce::String::toDecimalStringWithSignificantFigures(-graphPath.getBounds().getBottom(), 3);
+            auto topText = juce::String::toDecimalStringWithSignificantFigures(std::round(-graphPath.getBounds().getY() * 1e3) / 1e3, 3);
+            auto bottomText = juce::String::toDecimalStringWithSignificantFigures(std::round(-graphPath.getBounds().getBottom() * 1e3) / 1e3, 3);
             
             g.setFont(juce::FontOptions(14.0f));
             
@@ -143,7 +143,7 @@ void AnalysisGraphContent::textTimerCallback()
 {
     // update the current text if analysing
     if (!analysingRn) return;
-    currText = juce::String::toDecimalStringWithSignificantFigures(-prevVal, 3);
+    currText = juce::String::toDecimalStringWithSignificantFigures(std::round(-prevVal * 1e3) / 1e3, 3);
 }
 
 void AnalysisGraphContent::setSelection()
