@@ -24,8 +24,11 @@ InspectorPanel::InspectorPanel(std::shared_ptr<DataManager> d) : valueStreamGrap
 
     addAndMakeVisible(header);
     addChildComponent(valueStreamGraph);
+    addChildComponent(mathsNodeTextBox);
     
-    header.setText("Value Stream #1");
+    mathsNodeTextBox.setName("Expression (ExprTK):");
+    
+    header.setText("Nothing Selected");
     
 }
 
@@ -44,6 +47,7 @@ void InspectorPanel::reset()
     individualParams.clear();
     header.setText("");
     valueStreamGraph.setVisible(false);
+    mathsNodeTextBox.setVisible(false);
 }
 
 void InspectorPanel::resized()
@@ -82,6 +86,7 @@ void InspectorPanel::resized()
     valueStreamGraph.setBounds(b.withY(currHeight).withHeight(100));
     valueStreamGraph.setSelection(selectedStreamType, selectedStreamId);
     
+    mathsNodeTextBox.setBounds(b.withY(currHeight).withHeight(mathsNodeTextBox.getIdealHeight()));
 }
 
 void InspectorPanel::pubtest()
@@ -141,6 +146,73 @@ void InspectorPanel::setSelection(ParameterType type, int streamId)
         valueStreamGraph.setVisible(true);
         valueStreamGraph.setSelection(type, streamId);
     }
+    
+    resized();
+}
+
+void InspectorPanel::setSelection(int nodeId)
+{
+    reset();
+    
+    nodeSelected = true;
+    streamSelected = false;
+    selectedNodeId = nodeId;
+    
+    auto node = dataManager->activeInstance->nodes[nodeId];
+    
+    if (node == nullptr) return;
+    
+    header.setText(node->friendlyName);
+    
+    auto position = new InspectorPanel__Group(); // TODO: doesn't yet update shown values with dataManager, idk how to do this though and i cant be bothered rn
+    position->setName("Position");
+    
+    auto xPos = new InspectorPanel__Param();
+    xPos->setName("x");
+    xPos->setValue(juce::String(node->position.getX()));
+    xPos->handleInput = [this, nodeId] (const juce::String& newVal) {
+        dataManager->startEditing();
+        dataManager->inactiveInstance->nodes[nodeId]->position.setX(newVal.getFloatValue());
+        dataManager->finishEditing();
+    };
+    
+    auto yPos = new InspectorPanel__Param();
+    yPos->setName("y");
+    yPos->setValue(juce::String(node->position.getY()));
+    yPos->handleInput = [this, nodeId] (const juce::String& newVal) {
+        dataManager->startEditing();
+        dataManager->inactiveInstance->nodes[nodeId]->position.setY(newVal.getFloatValue());
+        dataManager->finishEditing();
+    };
+    
+    position->addParam(xPos);
+    position->addParam(yPos);
+    
+    addGroup(position);
+    
+    if (node->getType() == NodeType::Maths)
+    {
+        mathsNodeTextBox.setVisible(true);
+        mathsNodeTextBox.setValue(((Data::MathsNode*)node)->expression_string);
+        
+        mathsNodeTextBox.handleInput = [this, nodeId] (const juce::String& newVal) {
+            dataManager->startEditing();
+            
+            auto node = dataManager->inactiveInstance->nodes[nodeId];
+            
+            if (node == nullptr || node->getType() != NodeType::Maths) {
+                dataManager->finishEditing();
+                return;
+            }
+            
+            auto mathsNode = (Data::MathsNode*) node;
+            
+            mathsNode->updateExpressionString(newVal);
+            
+            dataManager->finishEditing();
+        };
+    }
+    
     
     resized();
 }
@@ -251,6 +323,56 @@ void InspectorPanel__Param::setValue(juce::String value)
 
 
 
+InspectorPanel__TextBox::InspectorPanel__TextBox() : font(juce::FontOptions(textHeight))
+{
+    addAndMakeVisible(nameLabel);
+    addAndMakeVisible(textEditor);
+    
+    nameLabel.setFont(juce::Font(juce::FontOptions(textHeight, juce::Font::FontStyleFlags::bold)));
+    textEditor.setFont(font);
+    
+    textEditor.setMultiLine(true);
+    textEditor.setReturnKeyStartsNewLine(true);
+    
+    textEditor.onFocusLost = [this] ()
+    {
+        handleInput(textEditor.getText());
+    };
+}
+
+InspectorPanel__TextBox::~InspectorPanel__TextBox()
+{
+}
+
+void InspectorPanel__TextBox::paint (juce::Graphics& g)
+{
+}
+
+void InspectorPanel__TextBox::resized()
+{
+    auto b = getLocalBounds();
+    
+    nameLabel.setBounds(b.removeFromTop(textHeight + 3));
+    
+    textEditor.setBounds(b);
+}
+
+float InspectorPanel__TextBox::getIdealHeight()
+{
+    return (textHeight + 3) * (numLines + 1);
+}
+
+void InspectorPanel__TextBox::setName(juce::String name_)
+{
+    name = name_;
+    
+    nameLabel.setText(name, juce::dontSendNotification);
+}
+
+void InspectorPanel__TextBox::setValue(juce::String value)
+{
+    textEditor.setText(value);
+}
 
 
 InspectorPanel__Header::InspectorPanel__Header()

@@ -121,6 +121,8 @@ public:
     std::function<void(InputOrOutput, int)> onDragStreamStart;
     std::function<void(InputOrOutput, int, juce::Point<float>)> onDragStream;
     std::function<void(InputOrOutput, int, juce::Point<float>)> onDragStreamEnd;
+    
+    std::function<void(int nodeId)> handleSelectNode;
 
     float getIdealHeight();
     void setNodeId(int n) {nodeId = n;}
@@ -132,6 +134,8 @@ public:
     
     juce::OwnedArray<Parameter>& getInputParams() {return inputParameters;}
     juce::OwnedArray<Parameter>& getOutputParams() {return outputParameters;}
+    
+    void setSelected(bool v) {isSelected = v;}
     
     bool hasInputSide = true;
     bool hasOutputSide = true;
@@ -152,6 +156,8 @@ private:
     
     bool allowDrag;
     bool isBeingDragged;
+    
+    bool isSelected = false;
     
     juce::OwnedArray<Parameter> inputParameters;
     juce::OwnedArray<Parameter> outputParameters;

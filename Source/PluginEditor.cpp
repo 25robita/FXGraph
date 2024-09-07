@@ -74,7 +74,7 @@ void FXGraphAudioProcessorEditor::addNode(Data::Node* node, int nodeId)
         m_graphAreaStreams.repaint();
     };
     
-    n->component->onDataUpdate = [this] () {
+    n->component->onDataUpdate = [this] () { // TODO: maybe remove?
 //            dataManager->startEditing();
         
         // do the stuff
@@ -131,6 +131,10 @@ void FXGraphAudioProcessorEditor::addNode(Data::Node* node, int nodeId)
     
     n->component->onDragStreamEnd = [this] (InputOrOutput inputOrOutput, int paramId, juce::Point<float> position) {
         m_graphAreaStreams.handleDragStreamEnd(position);
+    };
+    
+    n->component->handleSelectNode = [this] (int nodeId) {
+        setSelection(nodeId);
     };
 }
 
@@ -208,6 +212,11 @@ void FXGraphAudioProcessorEditor::resized()
 
 void FXGraphAudioProcessorEditor::setSelection(ParameterType type, int streamId)
 {
+    if (nodeSelected)
+    {
+        graphNodes[selectedNodeId]->component->setSelected(false);
+    }
+    
     streamSelected = true;
     nodeSelected = false;
     
@@ -220,13 +229,18 @@ void FXGraphAudioProcessorEditor::setSelection(ParameterType type, int streamId)
     
     /* TODO: at this point:
      [x] the graph area streams must be notified that this stream is selected
-     [ ] all nodes, or just the previously selected node, must be notified that they are not selected
-     [ ] the inspector must be notified that a stream has been selected for it to display appropriate data
+     [x] all nodes, or just the previously selected node, must be notified that they are not selected
+     [x] the inspector must be notified that a stream has been selected for it to display appropriate data
     */
 }
 
 void FXGraphAudioProcessorEditor::setSelection(int nodeId)
 {
+    if (nodeSelected)
+    {
+        graphNodes[selectedNodeId]->component->setSelected(false);
+    }
+    
     streamSelected = false;
     nodeSelected = true;
     
@@ -236,10 +250,14 @@ void FXGraphAudioProcessorEditor::setSelection(int nodeId)
     
     /* TODO: at this point:
      [x] the graph area streams must be notified that there is no stream selected
-     [ ] the selected node must be notified that it must change its appearance
-     [ ] all other nodes, or just the previously selected node, must be notified that they are not selected
-     [ ] the inspector must be notified that a node has been selected for it to display appropriate data
+     [x] the selected node must be notified that it must change its appearance
+     [x] all other nodes, or just the previously selected node, must be notified that they are not selected
+     [x] the inspector must be notified that a node has been selected for it to display appropriate data
     */
+    
+    graphNodes[selectedNodeId]->component->setSelected(true);
+    
+    m_sideMenu.getInspector()->setSelection(nodeId);
 }
 
 

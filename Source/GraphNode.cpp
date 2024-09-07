@@ -137,7 +137,7 @@ void GraphNode::paint (juce::Graphics& g)
     
     roundedBackground.addRoundedRectangle(bounds, cornerRadius);
     
-    auto shadow = juce::DropShadow(juce::Colour(0x40aaaaaa), shadowSize, {0, 0});
+    auto shadow = juce::DropShadow(juce::Colour(isSelected ? 0xa0ffffff : 0x40aaaaaa), shadowSize, {0, 0});
 
     shadow.drawForPath(g, roundedBackground);
     
@@ -216,6 +216,8 @@ void GraphNode::mouseDown(const juce::MouseEvent &event) {
     } else {
         allowDrag = false;
     }
+    
+    handleSelectNode(nodeId);
 }
 
 void GraphNode::mouseDrag(const juce::MouseEvent &event) {

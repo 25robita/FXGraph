@@ -53,6 +53,44 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InspectorPanel__Param)
 };
 
+class InspectorPanel__TextBox  : public juce::Component
+{
+public:
+    InspectorPanel__TextBox();
+    ~InspectorPanel__TextBox() override;
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    
+    std::function<void(const juce::String& newValue)> handleInput;
+    
+    void setName(juce::String name_);
+    juce::String getName() {return name;};
+    
+    void setValue(juce::String value);
+    
+    void setNumLines(int v);
+    int getNumLines() {return numLines;};
+    
+    float getIdealHeight();
+    
+    const float textHeight = 15;
+
+private:
+    juce::Label nameLabel;
+    juce::TextEditor textEditor;
+    
+    juce::String name;
+    
+    juce::Font font;
+    
+    const float horizontalPadding = 3;
+    
+    int numLines = 3;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InspectorPanel__TextBox)
+};
+
 class InspectorPanel__Group  : public juce::Component
 {
 public:
@@ -129,6 +167,7 @@ private:
     juce::OwnedArray<InspectorPanel__Group> groups;
     juce::OwnedArray<InspectorPanel__Param> individualParams;
     AnalysisGraphContent valueStreamGraph;
+    InspectorPanel__TextBox mathsNodeTextBox;
     
     void addGroup(InspectorPanel__Group* group);
     void addParam(InspectorPanel__Param* param);

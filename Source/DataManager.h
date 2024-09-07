@@ -374,11 +374,14 @@ public:
             output->addChildElement(outputParams[i].serialise(i));
         }
         
+        additionalSerialisation(output);
+        
         return output;
     }
     
     virtual NodeType getType() = 0;
     virtual Node* getCopy() = 0;
+    virtual void additionalSerialisation(juce::XmlElement* elem) {};
     
     struct Defaults {
         juce::String name;
@@ -405,8 +408,8 @@ public:
     
     juce::AudioBuffer<float>* mainInput;
     
-    NodeType getType() {return NodeType::MainInput;}
-    Node* getCopy() {return new MainInputNode(*this);}
+    NodeType getType() override {return NodeType::MainInput;}
+    Node* getCopy() override {return new MainInputNode(*this);}
     
     static const Node::Defaults defaults;
 };
@@ -427,8 +430,8 @@ public:
         inputParams[0].type = ParameterType::Audio;
     };
     
-    NodeType getType() {return NodeType::MainOutput;}
-    Node* getCopy() {return new MainOutputNode(*this);}
+    NodeType getType() override {return NodeType::MainOutput;}
+    Node* getCopy() override {return new MainOutputNode(*this);}
     
     static const Node::Defaults defaults;
 };
@@ -456,8 +459,8 @@ public:
         outputParams[0].type = ParameterType::Audio;
     };
     
-    NodeType getType() {return NodeType::Gain;}
-    Node* getCopy() {return new GainNode(*this);}
+    NodeType getType() override {return NodeType::Gain;}
+    Node* getCopy() override {return new GainNode(*this);}
     
     static const Node::Defaults defaults;
 };
@@ -485,8 +488,8 @@ public:
         outputParams[1].type = ParameterType::Value;
     };
     
-    NodeType getType() {return NodeType::Level;}
-    Node* getCopy() {return new LevelNode(*this);}
+    NodeType getType() override {return NodeType::Level;}
+    Node* getCopy() override {return new LevelNode(*this);}
     
     static const Node::Defaults defaults;
 };
@@ -510,8 +513,8 @@ public:
         outputParams[0].type = ParameterType::Value;
     };
     
-    NodeType getType() {return NodeType::Correlation;}
-    Node* getCopy() {return new CorrelationNode(*this);}
+    NodeType getType() override {return NodeType::Correlation;}
+    Node* getCopy() override {return new CorrelationNode(*this);}
     
     static const Node::Defaults defaults;
 };
@@ -554,8 +557,8 @@ public:
 //        DBG("Destructor of LoudnessNode called");
     }
     
-    NodeType getType() {return NodeType::Loudness;}
-    Node* getCopy() {return new LoudnessNode(*this);}
+    NodeType getType() override {return NodeType::Loudness;}
+    Node* getCopy() override {return new LoudnessNode(*this);}
     
     std::unique_ptr<Ebu128LoudnessMeter> meter;
     
@@ -567,10 +570,10 @@ class MathsNode : public Node
 public:
     MathsNode() : MathsNode(nullptr) { };
     
-    MathsNode(const MathsNode& ln) : Node(ln) {
+    MathsNode(const MathsNode& mn) : Node(mn) {
         expression.register_symbol_table(symbol_table);
         
-        updateExpressionString("input1 ^ 2");
+        updateExpressionString(mn.expression_string);
         updateSymbolTable();
     };
     
@@ -587,6 +590,14 @@ public:
             inputParams[0].friendlyName = "Input 1";
             inputParams[0].name = "input1";
             inputParams[0].type = ParameterType::Value;
+            
+            updateExpressionString("input1");
+        } else
+        {
+            if (elem->getChildByName("mathsExpr") == nullptr)
+                updateExpressionString("input1");
+            else
+                updateExpressionString(elem->getChildByName("mathsExpr")->getAllSubText());
         }
         
         outputParams[0].isActive = true;
@@ -595,7 +606,6 @@ public:
         
         expression.register_symbol_table(symbol_table);
         
-        updateExpressionString("input1 ^ 2");
         updateSymbolTable();
     };
     
@@ -629,8 +639,15 @@ public:
         return expression.value();
     }
     
-    NodeType getType() {return NodeType::Maths;}
-    Node* getCopy() {return new MathsNode(*this);}
+    void additionalSerialisation(juce::XmlElement* elem) override {
+        auto mathsExprElement = new juce::XmlElement("mathsExpr");
+        mathsExprElement->addTextElement(expression_string);
+        
+        elem->addChildElement(mathsExprElement);
+    }
+    
+    NodeType getType() override {return NodeType::Maths;}
+    Node* getCopy() override {return new MathsNode(*this);}
     
     exprtk::symbol_table<float> symbol_table;
     exprtk::parser<float> parser;
