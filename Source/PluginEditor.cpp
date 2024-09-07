@@ -18,6 +18,12 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
 {
     dataManager = d;
     
+    std::function<void()> a = [this] () {
+        resetNodes();
+    };
+    
+    dataManager->registerRealisationListener(a);
+    
     addAndMakeVisible(m_graphAreaNodeContainer);
     resetNodes();
     
@@ -30,6 +36,9 @@ FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor&
         setSelection(); // clear selection
     };
     
+    m_sideMenu.onNodeAdded = [this] () {
+        resetNodes();
+    };
     
     addAndMakeVisible(m_sideMenu);
     
@@ -49,7 +58,7 @@ FXGraphAudioProcessorEditor::~FXGraphAudioProcessorEditor()
     
 }
 
-void FXGraphAudioProcessorEditor::addNode(Data::Node *&node, int nodeId)
+void FXGraphAudioProcessorEditor::addNode(Data::Node* node, int nodeId)
 {
     auto* n = new Common::Node();
     
@@ -131,7 +140,7 @@ void FXGraphAudioProcessorEditor::resetNodes()
     
     for (int nodeId = 0; nodeId < NUM_NODES; nodeId++) // TODO: put this in a function because all this will need to be repeated when i add nodes using the UI and also when i add nodes from data load stuff
     {
-        auto& node = dataManager->activeInstance->nodes[nodeId];
+        auto node = dataManager->activeInstance->nodes[nodeId];
         
         if (node == nullptr || !node->isActive) break;
         

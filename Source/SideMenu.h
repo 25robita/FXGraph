@@ -36,6 +36,8 @@ public:
     InspectorPanel* getInspector() {return &m_inspectorPanel;};
     NodeLibraryPanel* getNodeLibrary() {return &m_nodeLibraryPanel;};
     
+    std::function<void()> onNodeAdded;
+    
 protected:
     friend class SideMenu;
     SideMenu& owner;
@@ -68,6 +70,8 @@ public:
     
     InspectorPanel* getInspector() {return inspector;};
     NodeLibraryPanel* getNodeLibrary() {return nodeLibrary;};
+    
+    std::function<void()> onNodeAdded;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SideMenu)

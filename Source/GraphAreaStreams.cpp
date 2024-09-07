@@ -155,6 +155,8 @@ void GraphAreaStreams::paintStream(juce::Graphics& g, Data::Stream stream)
     auto inputNode = graphNodes[stream.inputNodeId];
     auto outputNode = graphNodes[stream.outputNodeId];
     
+    if (inputNode == nullptr || outputNode == nullptr) return;
+    
     // InputOrOutput is swapped because the stream inputs from the output side of the input node
     auto start = inputNode->component->getParameterPosition(InputOrOutput::Output, stream.inputParamId);
     

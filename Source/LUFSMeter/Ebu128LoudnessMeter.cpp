@@ -103,6 +103,7 @@ Ebu128LoudnessMeter::Ebu128LoudnessMeter()
 
 Ebu128LoudnessMeter::~Ebu128LoudnessMeter()
 {
+    DBG("Destructor of Ebu128LoudnessMeter called");
 }
 
 void Ebu128LoudnessMeter::prepareToPlay (double sampleRate, 

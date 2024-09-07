@@ -109,6 +109,10 @@
             file="Source/AnalysisGraphContent.cpp"/>
       <FILE id="EyijMS" name="AnalysisGraphContent.h" compile="0" resource="0"
             file="Source/AnalysisGraphContent.h"/>
+      <FILE id="ly5CNa" name="NodeLibraryNode.cpp" compile="1" resource="0"
+            file="Source/NodeLibraryNode.cpp"/>
+      <FILE id="tORJYH" name="NodeLibraryNode.h" compile="0" resource="0"
+            file="Source/NodeLibraryNode.h"/>
       <FILE id="etq95E" name="NodeLibraryPanel.cpp" compile="1" resource="0"
             file="Source/NodeLibraryPanel.cpp"/>
       <FILE id="NtoXn0" name="NodeLibraryPanel.h" compile="0" resource="0"

@@ -66,7 +66,15 @@ void AnalysisGraphContent::paint (juce::Graphics& g)
             }
             
             auto p = juce::Path(graphPath);
+            
+            for (auto i : {pathTransform.mat00, pathTransform.mat01, pathTransform.mat02, pathTransform.mat10, pathTransform.mat11, pathTransform.mat12})
+            {
+                if (isnan(i) || isinf(i)) goto dontApplyTransform;
+            }
+            
             p.applyTransform(pathTransform);
+            
+            dontApplyTransform:
             g.strokePath(p, juce::PathStrokeType(1.0f));
             
             // TODO: add + sign for positive values

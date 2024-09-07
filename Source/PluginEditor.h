@@ -37,7 +37,7 @@ private:
     void setSelection(int nodeId); // sets selection to a specific node
     void setSelection(); // clear selection
     
-    void addNode(Data::Node*& node, int nodeId);
+    void addNode(Data::Node* node, int nodeId);
     
     bool streamSelected;
     ParameterType selectedStreamType;

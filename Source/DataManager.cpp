@@ -11,6 +11,13 @@
 #include "DataManager.h"
 
 
+const Data::Node::Defaults Data::MainInputNode::defaults = {"Main Input", false, true};
+const Data::Node::Defaults Data::MainOutputNode::defaults = {"Main Output", true, false};
+const Data::Node::Defaults Data::GainNode::defaults = {"Gain", true, true};
+const Data::Node::Defaults Data::LevelNode::defaults = {"Level", true, true};
+const Data::Node::Defaults Data::CorrelationNode::defaults = {"Correlation", true, true};
+const Data::Node::Defaults Data::LoudnessNode::defaults = {"Loudness", true, true};
+
 void Data::DataInstance::prepareStreams()
 {
     // TODO: this is being called more than necessary
@@ -401,8 +408,8 @@ DataManager::DataManager()
     
     for (auto instance : {activeInstance, inactiveInstance})
     { // Add global locked nodes for each instance
-        addNode(instance, 0, NodeType::MainInput, "Input Node", {300, 300});
-        addNode(instance, 1, NodeType::MainOutput, "Output Node", {600, 300});
+        addNode(instance, 0, NodeType::MainInput, {300, 300});
+        addNode(instance, 1, NodeType::MainOutput, {600, 300});
     }
 }
 
@@ -413,12 +420,12 @@ DataManager::~DataManager()
 
 /** Editing methods */
 
-void DataManager::addNode(int index, NodeType type, juce::String name, juce::Point<float> position)
+void DataManager::addNode(int index, NodeType type, juce::Point<float> position)
 {
-    addNode(inactiveInstance, index, type, name, position);
+    addNode(inactiveInstance, index, type, position);
 }
 
-void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type, juce::String name, juce::Point<float> position)
+void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type, juce::Point<float> position)
 {
     
     //TODO: change whole thing
@@ -456,8 +463,9 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
     
     node->isActive = true;
     node->position = position;
-    node->friendlyName = name;
+//    node->friendlyName = name;
     
+    delete instance->nodes[index]; // just in case
     instance->nodes[index] = node;
     
 }
@@ -579,6 +587,8 @@ void DataManager::removeNode(Data::DataInstance *instance, int nodeId)
         }
     }
     
+    delete instance->nodes[nodeId];
+    
     // shift nodes
     for (int iterNodeId = nodeId; iterNodeId < NUM_NODES - 1; iterNodeId++)
     {
@@ -637,6 +647,7 @@ void DataManager::startEditing()
     {
         if (activeInstance->nodes[i] == nullptr)
         {
+            delete inactiveInstance->nodes[i]; // maybe needded, maybe not
             inactiveInstance->nodes[i] = nullptr;
             continue;
         }
@@ -690,5 +701,19 @@ void DataManager::realise()
         activeInstance = &a;
         inactiveInstance = &b;
     }
+    
+//    for (int listenerIndex = 0; listenerIndex < oneTimeRealisationListeners.size(); listenerIndex++)
+//    {
+//        oneTimeRealisationListeners[listenerIndex]->operator()();
+//        
+////        (*listener)();
+//        oneTimeRealisationListeners.remove(listenerIndex);
+//    }
+    
+    MessageManager::callAsync(oneTimeRealisationListener);
+    MessageManager::callAsync(realisationListener);
+    
+//    oneTimeRealisationListener();
+//    realisationListener();
 }
 

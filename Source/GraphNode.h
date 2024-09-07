@@ -95,7 +95,7 @@ private:
 };
 
 
-class GraphNode  : public juce::Component
+class GraphNode : public juce::Component
 {
 public:
     struct Parameter {
@@ -136,10 +136,10 @@ public:
     bool hasInputSide = true;
     bool hasOutputSide = true;
     
+    static const float cornerRadius;
+    static const float headerHeight;
+    static const float shadowSize;
 private:
-    const float cornerRadius = 10.0f;
-    const float headerHeight = 25.0f;
-    const float shadowSize = 10.0f;
     
     const int paramHeight = 20;
     const int paramPadding = 5;

@@ -12,6 +12,10 @@
 #include "GraphNode.h"
 
 
+const float GraphNode::cornerRadius = 10.0f;
+const float GraphNode::headerHeight = 25.0f;
+const float GraphNode::shadowSize = 10.0f;
+
 //==============================================================================
 GraphNode::GraphNode(std::shared_ptr<DataManager> d, int node, juce::Rectangle<float>& dragRect) : dragArea(dragRect), removeButton(*this)
 {

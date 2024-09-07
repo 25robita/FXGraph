@@ -29,6 +29,8 @@ enum NodeType
     Loudness = 5,
 };
 
+const NodeType NodeTypes[] = { MainInput, MainOutput, Gain, Level, Correlation, Loudness};
+
 const int NUM_NODES = 64;
 const int NUM_AUDIO_STREAMS = 128;
 const int NUM_VALUE_STREAMS = 128;
@@ -373,6 +375,12 @@ public:
     
     virtual NodeType getType() = 0;
     virtual Node* getCopy() = 0;
+    
+    struct Defaults {
+        juce::String name;
+        bool hasInputSide;
+        bool hasOutputSide;
+    };
 };
 
 class MainInputNode : public Node
@@ -382,7 +390,9 @@ public:
     
     MainInputNode(juce::XmlElement* elem) : Node(elem) {
         isGlobalLockedNode = true;
-        hasInputSide = false;
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
         
         outputParams[0].isActive = true;
         outputParams[0].friendlyName = "In";
@@ -393,6 +403,8 @@ public:
     
     NodeType getType() {return NodeType::MainInput;}
     Node* getCopy() {return new MainInputNode(*this);}
+    
+    static const Node::Defaults defaults;
 };
 
 class MainOutputNode : public Node
@@ -402,7 +414,9 @@ public:
     
     MainOutputNode(juce::XmlElement* elem) : Node(elem) {
         isGlobalLockedNode = true;
-        hasOutputSide = false;
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
         
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "Out";
@@ -411,6 +425,8 @@ public:
     
     NodeType getType() {return NodeType::MainOutput;}
     Node* getCopy() {return new MainOutputNode(*this);}
+    
+    static const Node::Defaults defaults;
 };
 
 class GainNode : public Node
@@ -419,6 +435,10 @@ public:
     GainNode() : GainNode(nullptr) { };
     
     GainNode(juce::XmlElement* elem) : Node(elem) {
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
+        
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -434,6 +454,8 @@ public:
     
     NodeType getType() {return NodeType::Gain;}
     Node* getCopy() {return new GainNode(*this);}
+    
+    static const Node::Defaults defaults;
 };
 
 class LevelNode : public Node
@@ -442,6 +464,10 @@ public:
     LevelNode() : LevelNode(nullptr) { };
     
     LevelNode(juce::XmlElement* elem) : Node(elem) {
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
+        
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -457,6 +483,8 @@ public:
     
     NodeType getType() {return NodeType::Level;}
     Node* getCopy() {return new LevelNode(*this);}
+    
+    static const Node::Defaults defaults;
 };
 
 class CorrelationNode : public Node
@@ -465,6 +493,10 @@ public:
     CorrelationNode() : CorrelationNode(nullptr) { };
     
     CorrelationNode(juce::XmlElement* elem) : Node(elem) {
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
+        
         inputParams[0].isActive = true;
         inputParams[0].friendlyName = "In";
         inputParams[0].type = ParameterType::Audio;
@@ -476,6 +508,8 @@ public:
     
     NodeType getType() {return NodeType::Correlation;}
     Node* getCopy() {return new CorrelationNode(*this);}
+    
+    static const Node::Defaults defaults;
 };
 
 class LoudnessNode : public Node
@@ -483,9 +517,15 @@ class LoudnessNode : public Node
 public:
     LoudnessNode() : LoudnessNode(nullptr) { };
     
-    LoudnessNode(const LoudnessNode& ln) : Node(ln), meter(new Ebu128LoudnessMeter()) { };
+    LoudnessNode(const LoudnessNode& ln) : Node(ln), meter(nullptr) {
+        meter.reset(new Ebu128LoudnessMeter());
+    };
     
     LoudnessNode(juce::XmlElement* elem) : Node(elem) {
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
+        
         meter.reset(new Ebu128LoudnessMeter());
 
         inputParams[0].isActive = true;
@@ -505,10 +545,17 @@ public:
         outputParams[2].type = ParameterType::Value;
     };
     
+    ~LoudnessNode()
+    {
+        DBG("Destructor of LoudnessNode called");
+    }
+    
     NodeType getType() {return NodeType::Loudness;}
     Node* getCopy() {return new LoudnessNode(*this);}
     
     std::unique_ptr<Ebu128LoudnessMeter> meter;
+    
+    static const Node::Defaults defaults;
 };
 
 struct AudioStream : Stream {
@@ -616,18 +663,25 @@ struct DataInstance
     
     void deserialise(juce::XmlElement* element)
     {
-        DBG("deserialise");
+        for (int i = 0; i < NUM_NODES; i++)
+        {
+            delete nodes[i];
+            nodes[i] = nullptr;
+        }
+            
+        
+//        DBG("deserialise");
         int nodeId = 0;
         
 //        auto root = element->getChildByName("dataInstance");
         
-        DBG(element->getTagName());
+//        DBG(element->getTagName());
         
         for (auto child : element->getChildIterator())
         {
             if (child->getTagName() == "node")
             {
-                DBG(child->toString());
+//                DBG(child->toString());
                 switch ((NodeType) child->getChildByName("type")->getAllSubText().getIntValue())
                 {
                     case NodeType::MainInput:
@@ -659,18 +713,22 @@ struct DataInstance
             }
         }
         
-        for (int i = nodeId; i < NUM_NODES; i++)
-        {
-            nodes[i] = nullptr;
-        }
+//        for (int i = nodeId + 1; i < NUM_NODES; i++) // i don't know why it has to be nodeId + 1 rather than just nodeId; i would have thought that given the ++ is after in the above switch case thingy it would just be i = nodeId but i suppose not. Either way, this works now which is good
+//        {
+//            delete nodes[i]; // just in case
+//            nodes[i] = nullptr;
+//        }
         
         prepareStreams();
     }
     
     ~DataInstance()
     {
+        DBG("Destruction of DataInstance ("<< i << ") called");
+        
         for (int i = 0; i < NUM_NODES; i++) // manual construction because im being naughty and using raw pointers
         {
+            DBG("Destroying node " << i << " (" << (nodes[i] == nullptr ? -1 : nodes[i]->getType()) << ")");
             delete nodes[i];
         }
     }
@@ -725,8 +783,8 @@ public:
     DataManager();
     ~DataManager();
     
-    void addNode(int index, NodeType type, juce::String name, juce::Point<float> position);
-    void addNode(Data::DataInstance* instance, int index, NodeType type, juce::String name, juce::Point<float> position);
+    void addNode(int index, NodeType type, juce::Point<float> position);
+    void addNode(Data::DataInstance* instance, int index, NodeType type, juce::Point<float> position);
     
     void removeStream(ParameterType type, int streamid);
     void removeStream(Data::DataInstance* instance, ParameterType type, int streamid);
@@ -747,6 +805,17 @@ public:
     void finishEditing();
     void realise();
     
+    void registerOneTimeRealisationListener(std::function<void()>& f) 
+    {
+        oneTimeListenerFlag = true;
+        oneTimeRealisationListener = f;
+    }
+    
+    void registerRealisationListener(std::function<void()>& f)
+    {
+        realisationListener = f;
+    }
+    
     bool isEditing() {return editing;};
     
 private:
@@ -755,4 +824,8 @@ private:
     
     bool editing;
     bool changeQueued;
+    bool oneTimeListenerFlag = false;
+    
+    std::function<void()> oneTimeRealisationListener = [] () {};
+    std::function<void()> realisationListener = [] () {};
 };

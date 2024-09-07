@@ -36,6 +36,10 @@ SideMenu::SideMenu(std::shared_ptr<DataManager> d) : m_sidePanel("Side panel", 3
     auto sideMenuHeader = new Header(*this);
     auto m_sideMenuContent = new SideMenuContent(*this, d);
     
+    m_sideMenuContent->onNodeAdded = [this] () {
+        onNodeAdded();
+    };
+    
     inspector = m_sideMenuContent->getInspector();
     nodeLibrary = m_sideMenuContent->getNodeLibrary();
     
@@ -128,13 +132,17 @@ void SideMenu::handleTabChanged(int newTabIndex) {
     ((SideMenuContent*) m_sidePanel.getContent())->handleTabChanged(newTabIndex);
 }
 
-SideMenuContent::SideMenuContent(SideMenu& parent, std::shared_ptr<DataManager> d) : owner(parent), m_inspectorPanel(d)
+SideMenuContent::SideMenuContent(SideMenu& parent, std::shared_ptr<DataManager> d) : owner(parent), m_inspectorPanel(d), m_nodeLibraryPanel(d)
 {
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
     
     addTab(&m_nodeLibraryPanel);
     addTab(&m_inspectorPanel);
+    
+    m_nodeLibraryPanel.onNodeAdded = [this] () {
+        onNodeAdded();
+    };
     
     panelComponent = contentComponents[0].get();
     addChildComponent(panelComponent);
