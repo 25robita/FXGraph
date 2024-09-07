@@ -743,7 +743,11 @@ void DataManager::realise()
 //        oneTimeRealisationListeners.remove(listenerIndex);
 //    }
     
-    MessageManager::callAsync(oneTimeRealisationListener);
+    if (oneTimeListenerFlag){
+        MessageManager::callAsync(oneTimeRealisationListener);
+        oneTimeListenerFlag = false;
+    }
+    
     MessageManager::callAsync(realisationListener);
     
 //    oneTimeRealisationListener();

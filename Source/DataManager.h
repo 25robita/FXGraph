@@ -14,6 +14,12 @@
 #include "LUFSMeter/Ebu128LoudnessMeter.h"
 #include "exprtk/exprtk.hpp"
 
+enum InputOrOutput
+{
+    Input,
+    Output
+};
+
 enum ParameterType
 {
     Audio,
@@ -47,6 +53,9 @@ struct Node;
 struct Parameter
 {
     bool isActive = false;
+    bool canEditFriendlyName = true;
+    bool canEditName = false;
+    bool canEditType = false;
     
     ParameterType type;
     
@@ -379,9 +388,61 @@ public:
         return output;
     }
     
+    int nextAvailableInputParamId()
+    {
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            if (!inputParams[i].isActive) return i;
+        }
+        return -1;
+    }
+    
+    int nextAvailableOutputParamId()
+    {
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            if (!outputParams[i].isActive) return i;
+        }
+        return -1;
+    }
+    
+    int nextAvailableParamId(InputOrOutput side)
+    {
+        if (side == InputOrOutput::Input) return nextAvailableInputParamId();
+        
+        return nextAvailableOutputParamId();
+    }
+    
+    void removeInputParameter(int index)
+    {
+        for (int i = index; i < NUM_PARAMS - 1; i++) {
+            inputParams[i].copyFrom(inputParams[i + 1]);
+        }
+        
+        inputParams[NUM_PARAMS - 1].isActive = false;
+    }
+    
+    void removeOutputParameter(int index)
+    {
+        for (int i = index; i < NUM_PARAMS - 1; i++) {
+            outputParams[i].copyFrom(outputParams[i + 1]);
+        }
+        
+        outputParams[NUM_PARAMS - 1].isActive = false;
+    }
+    
+    void removeParameter(int index, InputOrOutput side)
+    {
+        if (side == InputOrOutput::Input) removeInputParameter(index);
+        else removeOutputParameter(index);
+    }
+    
     virtual NodeType getType() = 0;
     virtual Node* getCopy() = 0;
     virtual void additionalSerialisation(juce::XmlElement* elem) {};
+    
+    virtual bool canAddInputParam() {return false;}
+    virtual bool canAddOutputParam() {return false;}
     
     struct Defaults {
         juce::String name;
@@ -582,6 +643,11 @@ public:
         hasOutputSide = defaults.hasOutputSide;
         friendlyName = defaults.name;
         
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            inputParams[i].canEditName = true;
+        }
+        
         // if there is no element, make one input param to start off with (Input 1, [input_1])
         
         if (elem == nullptr)
@@ -648,6 +714,7 @@ public:
     
     NodeType getType() override {return NodeType::Maths;}
     Node* getCopy() override {return new MathsNode(*this);}
+    bool canAddInputParam() override {return true;}
     
     exprtk::symbol_table<float> symbol_table;
     exprtk::parser<float> parser;
@@ -909,13 +976,13 @@ public:
     void finishEditing();
     void realise();
     
-    void registerOneTimeRealisationListener(std::function<void()>& f) 
+    void registerOneTimeRealisationListener(const std::function<void()>& f) 
     {
         oneTimeListenerFlag = true;
         oneTimeRealisationListener = f;
     }
     
-    void registerRealisationListener(std::function<void()>& f)
+    void registerRealisationListener(const std::function<void()>& f)
     {
         realisationListener = f;
     }

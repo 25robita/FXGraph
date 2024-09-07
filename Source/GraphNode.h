@@ -18,12 +18,6 @@
 */
 class GraphNode;
 
-enum InputOrOutput
-{
-    Input,
-    Output
-};
-
 class GraphNode__Parameter  : public juce::Component
 {
 public:

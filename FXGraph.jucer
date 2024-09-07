@@ -4,6 +4,12 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="HnWc0u" name="FXGraph">
     <GROUP id="{2D4AB358-7276-2151-C7AB-B52088DECFC4}" name="Source">
+      <FILE id="eZfXXb" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="hz9X22" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="oZoO5N" name="DataManager.cpp" compile="1" resource="0" file="Source/DataManager.cpp"/>
+      <FILE id="yOfCfI" name="DataManager.h" compile="0" resource="0" file="Source/DataManager.h"/>
       <GROUP id="{C68F137B-0054-76F5-A647-ACD8748D5E9D}" name="exprtk">
         <FILE id="KJkJ0G" name="exprtk.hpp" compile="0" resource="0" file="Source/exprtk/exprtk.hpp"/>
         <FILE id="EmzSa2" name="exprtk_benchmark.cpp" compile="0" resource="0"
@@ -148,41 +154,43 @@
               file="Source/LUFSMeter/MacrosAndJuceHeaders.h"/>
         <FILE id="no0jYw" name="README.rst" compile="0" resource="0" file="Source/LUFSMeter/README.rst"/>
       </GROUP>
-      <FILE id="oZoO5N" name="DataManager.cpp" compile="1" resource="0" file="Source/DataManager.cpp"/>
-      <FILE id="yOfCfI" name="DataManager.h" compile="0" resource="0" file="Source/DataManager.h"/>
-      <FILE id="eZfXXb" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
-      <FILE id="hz9X22" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
+      <FILE id="haK5vp" name="Envelope.cpp" compile="1" resource="0" file="Source/Envelope.cpp"/>
+      <FILE id="UAViwa" name="Envelope.h" compile="0" resource="0" file="Source/Envelope.h"/>
       <FILE id="yCcSO5" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="HKOfGh" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-      <FILE id="GqObM5" name="InspectorPanel.cpp" compile="1" resource="0"
-            file="Source/InspectorPanel.cpp"/>
-      <FILE id="PaomiS" name="InspectorPanel.h" compile="0" resource="0"
-            file="Source/InspectorPanel.h"/>
-      <FILE id="iH9KRO" name="AnalysisGraphContent.cpp" compile="1" resource="0"
-            file="Source/AnalysisGraphContent.cpp"/>
-      <FILE id="EyijMS" name="AnalysisGraphContent.h" compile="0" resource="0"
-            file="Source/AnalysisGraphContent.h"/>
-      <FILE id="ly5CNa" name="NodeLibraryNode.cpp" compile="1" resource="0"
-            file="Source/NodeLibraryNode.cpp"/>
-      <FILE id="tORJYH" name="NodeLibraryNode.h" compile="0" resource="0"
-            file="Source/NodeLibraryNode.h"/>
-      <FILE id="etq95E" name="NodeLibraryPanel.cpp" compile="1" resource="0"
-            file="Source/NodeLibraryPanel.cpp"/>
-      <FILE id="NtoXn0" name="NodeLibraryPanel.h" compile="0" resource="0"
-            file="Source/NodeLibraryPanel.h"/>
       <FILE id="vmNAv9" name="SideMenu.cpp" compile="1" resource="0" file="Source/SideMenu.cpp"/>
       <FILE id="oS8Tzm" name="SideMenu.h" compile="0" resource="0" file="Source/SideMenu.h"/>
-      <FILE id="ElWIOh" name="SideMenuCollapser.cpp" compile="1" resource="0"
-            file="Source/SideMenuCollapser.cpp"/>
-      <FILE id="xEOA4L" name="SideMenuCollapser.h" compile="0" resource="0"
-            file="Source/SideMenuCollapser.h"/>
       <FILE id="J0l5NQ" name="SideMenuHeader.cpp" compile="1" resource="0"
             file="Source/SideMenuHeader.cpp"/>
       <FILE id="yx0FL4" name="SideMenuHeader.h" compile="0" resource="0"
             file="Source/SideMenuHeader.h"/>
+      <FILE id="ElWIOh" name="SideMenuCollapser.cpp" compile="1" resource="0"
+            file="Source/SideMenuCollapser.cpp"/>
+      <FILE id="xEOA4L" name="SideMenuCollapser.h" compile="0" resource="0"
+            file="Source/SideMenuCollapser.h"/>
+      <FILE id="etq95E" name="NodeLibraryPanel.cpp" compile="1" resource="0"
+            file="Source/NodeLibraryPanel.cpp"/>
+      <FILE id="NtoXn0" name="NodeLibraryPanel.h" compile="0" resource="0"
+            file="Source/NodeLibraryPanel.h"/>
+      <FILE id="ly5CNa" name="NodeLibraryNode.cpp" compile="1" resource="0"
+            file="Source/NodeLibraryNode.cpp"/>
+      <FILE id="tORJYH" name="NodeLibraryNode.h" compile="0" resource="0"
+            file="Source/NodeLibraryNode.h"/>
+      <FILE id="GqObM5" name="InspectorPanel.cpp" compile="1" resource="0"
+            file="Source/InspectorPanel.cpp"/>
+      <FILE id="PaomiS" name="InspectorPanel.h" compile="0" resource="0"
+            file="Source/InspectorPanel.h"/>
+      <FILE id="cr9M9K" name="ParamTable.cpp" compile="1" resource="0" file="Source/ParamTable.cpp"/>
+      <FILE id="bo38bH" name="ParamTable.h" compile="0" resource="0" file="Source/ParamTable.h"/>
+      <FILE id="iH9KRO" name="AnalysisGraphContent.cpp" compile="1" resource="0"
+            file="Source/AnalysisGraphContent.cpp"/>
+      <FILE id="EyijMS" name="AnalysisGraphContent.h" compile="0" resource="0"
+            file="Source/AnalysisGraphContent.h"/>
+      <FILE id="Xy6WPm" name="GraphAreaNodeContainer.cpp" compile="1" resource="0"
+            file="Source/GraphAreaNodeContainer.cpp"/>
+      <FILE id="x82YDA" name="GraphAreaNodeContainer.h" compile="0" resource="0"
+            file="Source/GraphAreaNodeContainer.h"/>
       <FILE id="nKby5D" name="GraphNode.cpp" compile="1" resource="0" file="Source/GraphNode.cpp"/>
       <FILE id="l8E9FT" name="GraphNode.h" compile="0" resource="0" file="Source/GraphNode.h"/>
       <FILE id="pVaoIo" name="GraphAreaStreams.cpp" compile="1" resource="0"
@@ -190,12 +198,6 @@
       <FILE id="ZKI5UF" name="GraphAreaStreams.h" compile="0" resource="0"
             file="Source/GraphAreaStreams.h"/>
       <FILE id="Xb7nzy" name="Common.h" compile="0" resource="0" file="Source/Common.h"/>
-      <FILE id="Xy6WPm" name="GraphAreaNodeContainer.cpp" compile="1" resource="0"
-            file="Source/GraphAreaNodeContainer.cpp"/>
-      <FILE id="x82YDA" name="GraphAreaNodeContainer.h" compile="0" resource="0"
-            file="Source/GraphAreaNodeContainer.h"/>
-      <FILE id="haK5vp" name="Envelope.cpp" compile="1" resource="0" file="Source/Envelope.cpp"/>
-      <FILE id="UAViwa" name="Envelope.h" compile="0" resource="0" file="Source/Envelope.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

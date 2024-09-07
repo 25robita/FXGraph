@@ -12,7 +12,9 @@
 
 #include <JuceHeader.h>
 #include "DataManager.h"
+#include "Common.h"
 #include "AnalysisGraphContent.h"
+#include "ParamTable.h"
 
 class InspectorPanel__Param  : public juce::Component
 {
@@ -139,6 +141,48 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InspectorPanel__Header)
 };
 
+class InspectorPanel__ParamsList  : public juce::Component
+{
+public:
+    InspectorPanel__ParamsList(std::shared_ptr<DataManager> d, int nodeId_, InputOrOutput side);
+    ~InspectorPanel__ParamsList() override;
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    
+    std::function<void(const juce::String& newValue)> handleInput;
+    
+    void setName(juce::String name_);
+    juce::String getName() {return name;};
+    
+    void setNumLines(int v);
+    int getNumLines() {return numLines;};
+    
+    float getIdealHeight();
+    
+    const float textHeight = 15;
+    const float buttonHeight = 20;
+
+private:
+    juce::Label nameLabel;
+    ParamTable_Model paramTable;
+    juce::TextButton addParamButton;
+    std::shared_ptr<DataManager> dataManager;
+    int nodeId;
+    
+    bool hasAddButton;
+    
+    juce::String name;
+    
+    juce::Font font;
+    
+    const float horizontalPadding = 3;
+    
+    int numLines = 3;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InspectorPanel__ParamsList)
+};
+
 
 class InspectorPanel  : public juce::Component
 {
@@ -166,6 +210,8 @@ private:
     InspectorPanel__Header header;
     juce::OwnedArray<InspectorPanel__Group> groups;
     juce::OwnedArray<InspectorPanel__Param> individualParams;
+    std::unique_ptr<InspectorPanel__ParamsList> inputParamsList;
+    std::unique_ptr<InspectorPanel__ParamsList> outputParamsList;
     AnalysisGraphContent valueStreamGraph;
     InspectorPanel__TextBox mathsNodeTextBox;
     

@@ -28,33 +28,6 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     // handmake some data for now
     
     dataManager.reset(new DataManager());
-    
-    float vars[5] = {0, 1, 2, 3, 4};
-    
-    const std::string expression_string = "y ^ 2 - 1";
-    
-    exprtk::symbol_table<float> symbol_table;
-    symbol_table.add_variable("x", vars[0]);
-    symbol_table.add_constants();
-
-    exprtk::expression<float> expression;
-    expression.register_symbol_table(symbol_table);
-
-    exprtk::parser<float> parser;
-    parser.compile(expression_string,expression);
-    
-    symbol_table.clear();
-    symbol_table.add_variable("y", vars[1]);
-    
-    parser.compile(expression_string,expression); // every time the symbol table or expression string is modified, the parser must recompile the expression
-
-    for (vars[1] = -5; vars[1] <= 5; vars[1] += 0.001)
-    {
-        const float y = expression.value();
-        printf("%19.15f\t%19.15f\n", vars[1], y);
-    }
-
-    
 }
 
 FXGraphAudioProcessor::~FXGraphAudioProcessor()
@@ -262,18 +235,12 @@ void FXGraphAudioProcessor::setStateInformation (const void* data, int sizeInByt
     
     auto editor = (FXGraphAudioProcessorEditor*) getActiveEditor();
     
-    if (editor == nullptr) {
-//        DBG("editor is null when setState");
+    if (editor == nullptr)
         return;
-    } else {
-//        DBG("editor is not null when setState");
-    }
     
     MessageManager::callAsync([editor] () {
         editor->resetNodes();
-        
-//        DBG("editor nodes have been reset due to setState");
-    }); // might work, well see
+    });
 }
 
 //==============================================================================

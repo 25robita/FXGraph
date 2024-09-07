@@ -48,6 +48,9 @@ void InspectorPanel::reset()
     header.setText("");
     valueStreamGraph.setVisible(false);
     mathsNodeTextBox.setVisible(false);
+    
+    inputParamsList.reset();
+    outputParamsList.reset();
 }
 
 void InspectorPanel::resized()
@@ -83,10 +86,38 @@ void InspectorPanel::resized()
         currHeight += idealHeight + padding;
     }
     
-    valueStreamGraph.setBounds(b.withY(currHeight).withHeight(100));
-    valueStreamGraph.setSelection(selectedStreamType, selectedStreamId);
+    if (streamSelected && selectedStreamType == ParameterType::Value)
+    {
+        valueStreamGraph.setBounds(b.withY(currHeight).withHeight(100));
+        valueStreamGraph.setSelection(selectedStreamType, selectedStreamId);
+        
+        currHeight += 100 + padding;
+    }
     
-    mathsNodeTextBox.setBounds(b.withY(currHeight).withHeight(mathsNodeTextBox.getIdealHeight()));
+    if (nodeSelected && dataManager->activeInstance->nodes[selectedNodeId]->getType() == NodeType::Maths)
+    {
+        float h = mathsNodeTextBox.getIdealHeight();
+        
+        mathsNodeTextBox.setBounds(b.withY(currHeight).withHeight(h));
+        
+        currHeight += h + padding;
+    }
+    
+    if (inputParamsList != nullptr) {
+        float idealHeight =inputParamsList->getIdealHeight();
+        
+        inputParamsList->setBounds(b.withY(currHeight).withHeight(idealHeight));
+        
+        currHeight += idealHeight + padding;
+    }
+    
+    if (outputParamsList != nullptr) {
+        float idealHeight =outputParamsList->getIdealHeight();
+        
+        outputParamsList->setBounds(b.withY(currHeight).withHeight(idealHeight));
+        
+        currHeight += idealHeight + padding;
+    }
 }
 
 void InspectorPanel::pubtest()
@@ -213,6 +244,11 @@ void InspectorPanel::setSelection(int nodeId)
         };
     }
     
+    inputParamsList.reset(new InspectorPanel__ParamsList(dataManager, selectedNodeId, InputOrOutput::Input));
+    outputParamsList.reset(new InspectorPanel__ParamsList(dataManager, selectedNodeId, InputOrOutput::Output));
+    
+    addAndMakeVisible(*inputParamsList);
+    addAndMakeVisible(*outputParamsList);
     
     resized();
 }
@@ -489,4 +525,88 @@ void InspectorPanel__Group::addParam(InspectorPanel__Param *param)
 {
     addAndMakeVisible(param);
     params.add(param);
+}
+
+
+
+
+InspectorPanel__ParamsList::InspectorPanel__ParamsList(std::shared_ptr<DataManager> d, int nodeId_, InputOrOutput side) : paramTable(d, nodeId_, side), font(juce::FontOptions(textHeight))
+{
+    dataManager = d;
+    
+    setName(side == InputOrOutput::Input ? "Input Parameters" : "Output Parameters");
+    addAndMakeVisible(nameLabel);
+    
+    nodeId = nodeId_;
+    
+    addAndMakeVisible(paramTable);
+    
+    hasAddButton = (side == InputOrOutput::Input && dataManager->activeInstance->nodes[nodeId]->canAddInputParam())
+                    || (side == InputOrOutput::Output && dataManager->activeInstance->nodes[nodeId]->canAddOutputParam());
+    
+    if (hasAddButton)
+    {
+        addAndMakeVisible(addParamButton);
+        addParamButton.setButtonText("Add Parameter");
+        
+        addParamButton.onClick = [this, side] () {
+            // assume its a value param, because that's all that makes sense really
+            
+            dataManager->startEditing();
+            
+            int id = dataManager->inactiveInstance->nodes[nodeId]->nextAvailableParamId(side);
+            
+            if (id == -1)
+            {
+                //TODO: don't fail silently please
+                dataManager->finishEditing();
+                return;
+            }
+            
+            Data::Parameter& param = side == InputOrOutput::Input ? (Data::Parameter&)dataManager->inactiveInstance->nodes[nodeId]->inputParams[id] : (Data::Parameter&)dataManager->inactiveInstance->nodes[nodeId]->outputParams[id];
+            
+            param.type = ParameterType::Value;
+            param.name = "input" + juce::String(id + 1);
+            param.friendlyName = "Input " + juce::String(id + 1);
+            param.isActive = true;
+            
+            dataManager->finishEditing();
+            
+        };
+    }
+    
+    nameLabel.setFont(juce::Font(juce::FontOptions(textHeight, juce::Font::FontStyleFlags::bold)));
+}
+
+InspectorPanel__ParamsList::~InspectorPanel__ParamsList()
+{
+}
+
+void InspectorPanel__ParamsList::paint (juce::Graphics& g)
+{
+}
+
+void InspectorPanel__ParamsList::resized()
+{
+    auto b = getLocalBounds();
+    
+    nameLabel.setBounds(b.removeFromTop(textHeight + 5));
+    
+    paramTable.setBounds(b.removeFromTop(paramTable.getIdealHeight()));
+    
+    b.removeFromTop(5);
+    
+    addParamButton.setBounds(b);
+}
+
+float InspectorPanel__ParamsList::getIdealHeight()
+{
+    return (textHeight + 5) + paramTable.getIdealHeight() + (hasAddButton ? 5 + buttonHeight : 0); // TODO: add button
+}
+
+void InspectorPanel__ParamsList::setName(juce::String name_)
+{
+    name = name_;
+    
+    nameLabel.setText(name, juce::dontSendNotification);
 }
