@@ -17,6 +17,7 @@ const Data::Node::Defaults Data::GainNode::defaults = {"Gain", true, true};
 const Data::Node::Defaults Data::LevelNode::defaults = {"Level", true, true};
 const Data::Node::Defaults Data::CorrelationNode::defaults = {"Correlation", true, true};
 const Data::Node::Defaults Data::LoudnessNode::defaults = {"Loudness", true, true};
+const Data::Node::Defaults Data::MathsNode::defaults = {"Maths", true, true};
 
 void Data::DataInstance::prepareStreams()
 {
@@ -317,7 +318,7 @@ void Data::DataInstance::evaluate(int nodeId)
         {
             auto loudnessNode = static_cast<Data::LoudnessNode*>(node);
             
-            DBG("hiii");
+//            DBG("hiii");
             
             int inputStreamId = loudnessNode->inputParams[0].streamId;
             
@@ -333,7 +334,7 @@ void Data::DataInstance::evaluate(int nodeId)
             
             auto input = audioStreams[inputStreamId].buffer;
             
-            DBG(input.getMagnitude(0, input.getNumSamples()));
+//            DBG(input.getMagnitude(0, input.getNumSamples()));
             
             loudnessNode->meter->processBlock(input);
             
@@ -360,6 +361,34 @@ void Data::DataInstance::evaluate(int nodeId)
             {
                 if (streamId == -1) break;
                 valueStreams[streamId].setValue(loudness);
+            }
+        }
+            break;
+        case NodeType::Maths:
+        {
+            auto mathsNode = static_cast<Data::MathsNode*>(node);
+            
+            // set input values based on streams
+            
+            for (int paramId = 0; paramId < NUM_PARAMS; paramId++)
+            {
+                if (!mathsNode->inputParams[paramId].isActive) break;
+                
+                if (mathsNode->inputParams[paramId].isConst)
+                {
+                    mathsNode->inputs[paramId] = mathsNode->inputParams[paramId].constValue;
+                    continue;
+                }
+                
+                mathsNode->inputs[paramId] = valueStreams[mathsNode->inputParams[paramId].streamId].value;
+            }
+
+            const float value = mathsNode->getValue();
+            
+            for (int streamId : node->outputParams[0].streamIds)
+            {
+                if (streamId == -1) break;
+                valueStreams[streamId].setValue(value);
             }
         }
             break;
@@ -453,6 +482,10 @@ void DataManager::addNode(Data::DataInstance* instance, int index, NodeType type
             break;
         case NodeType::Loudness:
             node = new Data::LoudnessNode();
+            break;
+        case NodeType::Maths:
+            node = new Data::MathsNode();
+            break;
     }
     
     if (node == nullptr)

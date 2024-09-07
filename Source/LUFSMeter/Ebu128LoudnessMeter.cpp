@@ -89,8 +89,8 @@ Ebu128LoudnessMeter::Ebu128LoudnessMeter()
     freezeLoudnessRangeOnSilence (false),
     currentBlockIsSilent (false)
 {
-    DBG ("The longest possible measurement until a buffer overflow = "
-        + juce::String (INT_MAX / 10. / 3600. / 365.) + " years");
+//    DBG ("The longest possible measurement until a buffer overflow = "
+//        + juce::String (INT_MAX / 10. / 3600. / 365.) + " years");
     
     // If this class is used without caution and processBlock
     // is called before prepareToPlay, divisions by zero
@@ -103,7 +103,7 @@ Ebu128LoudnessMeter::Ebu128LoudnessMeter()
 
 Ebu128LoudnessMeter::~Ebu128LoudnessMeter()
 {
-    DBG("Destructor of Ebu128LoudnessMeter called");
+//    DBG("Destructor of Ebu128LoudnessMeter called");
 }
 
 void Ebu128LoudnessMeter::prepareToPlay (double sampleRate, 

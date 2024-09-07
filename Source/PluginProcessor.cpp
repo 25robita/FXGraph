@@ -9,6 +9,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include "exprtk/exprtk.hpp"
+
 //==============================================================================
 FXGraphAudioProcessor::FXGraphAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -27,34 +29,32 @@ FXGraphAudioProcessor::FXGraphAudioProcessor()
     
     dataManager.reset(new DataManager());
     
+    float vars[5] = {0, 1, 2, 3, 4};
     
-//    dataManager->startEditing();
-//    
-//    dataManager->inactiveInstance->nodes[0]->outputParams[0].streamIds[0] = 0;
-//    dataManager->inactiveInstance->nodes[0]->outputParams[0].streamIds[1] = 1;
-//    
-//    dataManager->addNode(2, NodeType::Gain, {400, 100});
-//    
-//    dataManager->inactiveInstance->nodes[2]->inputParams[0].streamId = 0;
-//    
-//    dataManager->addNode(3, NodeType::Loudness, {100, 300});
-//    
-//    dataManager->inactiveInstance->nodes[3]->inputParams[0].streamId = 1;
-////    dataManager->inactiveInstance->nodes[3]->outputParams[1].streamIds[0] = 0;
-//    
-////    dataManager->inactiveInstance->nodes[2]->inputParams[1].streamId = 0;
-//    dataManager->inactiveInstance->nodes[2]->inputParams[1].isConst = true;
-//    dataManager->inactiveInstance->nodes[2]->inputParams[1].constValue = 0;
-//    
-//    dataManager->inactiveInstance->nodes[2]->outputParams[0].streamIds[0] = 2;
-//    
-//    dataManager->inactiveInstance->nodes[1]->inputParams[0].streamId = 2;
-//    
-//    dataManager->inactiveInstance->prepare();
-//    
-//    dataManager->finishEditing();
-//    dataManager->realise();
-//    
+    const std::string expression_string = "y ^ 2 - 1";
+    
+    exprtk::symbol_table<float> symbol_table;
+    symbol_table.add_variable("x", vars[0]);
+    symbol_table.add_constants();
+
+    exprtk::expression<float> expression;
+    expression.register_symbol_table(symbol_table);
+
+    exprtk::parser<float> parser;
+    parser.compile(expression_string,expression);
+    
+    symbol_table.clear();
+    symbol_table.add_variable("y", vars[1]);
+    
+    parser.compile(expression_string,expression); // every time the symbol table or expression string is modified, the parser must recompile the expression
+
+    for (vars[1] = -5; vars[1] <= 5; vars[1] += 0.001)
+    {
+        const float y = expression.value();
+        printf("%19.15f\t%19.15f\n", vars[1], y);
+    }
+
+    
 }
 
 FXGraphAudioProcessor::~FXGraphAudioProcessor()
@@ -263,16 +263,16 @@ void FXGraphAudioProcessor::setStateInformation (const void* data, int sizeInByt
     auto editor = (FXGraphAudioProcessorEditor*) getActiveEditor();
     
     if (editor == nullptr) {
-        DBG("editor is null when setState");
+//        DBG("editor is null when setState");
         return;
     } else {
-        DBG("editor is not null when setState");
+//        DBG("editor is not null when setState");
     }
     
     MessageManager::callAsync([editor] () {
         editor->resetNodes();
         
-        DBG("editor nodes have been reset due to setState");
+//        DBG("editor nodes have been reset due to setState");
     }); // might work, well see
 }
 

@@ -70,6 +70,15 @@ NodeLibraryPanel::NodeLibraryPanel(std::shared_ptr<DataManager> d) : dataManager
                 
                 nodes.add(node);
                 break;
+            case NodeType::Maths:
+                node = new NodeLibraryNode(Data::MathsNode::defaults.name, Data::MathsNode::defaults.hasInputSide, Data::MathsNode::defaults.hasOutputSide);
+                
+                // initialise parameters
+                node->addParameter(InputOrOutput::Input, ParameterType::Value, "Input 1");
+                node->addParameter(InputOrOutput::Output, ParameterType::Value, "Out");
+                
+                nodes.add(node);
+                break;
         }
         
         node->onDragEnd = [this, type] (juce::Point<float> p) {

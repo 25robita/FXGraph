@@ -12,6 +12,7 @@
 #include "JuceHeader.h"
 #include "Envelope.h"
 #include "LUFSMeter/Ebu128LoudnessMeter.h"
+#include "exprtk/exprtk.hpp"
 
 enum ParameterType
 {
@@ -27,9 +28,10 @@ enum NodeType
     Level = 3,
     Correlation = 4,
     Loudness = 5,
+    Maths = 6,
 };
 
-const NodeType NodeTypes[] = { MainInput, MainOutput, Gain, Level, Correlation, Loudness};
+const NodeType NodeTypes[] = { MainInput, MainOutput, Gain, Level, Correlation, Loudness, Maths};
 
 const int NUM_NODES = 64;
 const int NUM_AUDIO_STREAMS = 128;
@@ -122,6 +124,8 @@ struct InputParameter : Parameter {
     
     void deserialise(juce::XmlElement* elem)
     {
+        isActive = true;
+        
         auto friendlyNameElement = elem->getChildByName("friendlyName");
         friendlyName = friendlyNameElement->getAllSubText();
     
@@ -547,13 +551,93 @@ public:
     
     ~LoudnessNode()
     {
-        DBG("Destructor of LoudnessNode called");
+//        DBG("Destructor of LoudnessNode called");
     }
     
     NodeType getType() {return NodeType::Loudness;}
     Node* getCopy() {return new LoudnessNode(*this);}
     
     std::unique_ptr<Ebu128LoudnessMeter> meter;
+    
+    static const Node::Defaults defaults;
+};
+
+class MathsNode : public Node
+{
+public:
+    MathsNode() : MathsNode(nullptr) { };
+    
+    MathsNode(const MathsNode& ln) : Node(ln) {
+        expression.register_symbol_table(symbol_table);
+        
+        updateExpressionString("input1 ^ 2");
+        updateSymbolTable();
+    };
+    
+    MathsNode(juce::XmlElement* elem) : Node(elem) {
+        hasInputSide = defaults.hasInputSide;
+        hasOutputSide = defaults.hasOutputSide;
+        friendlyName = defaults.name;
+        
+        // if there is no element, make one input param to start off with (Input 1, [input_1])
+        
+        if (elem == nullptr)
+        {
+            inputParams[0].isActive = true;
+            inputParams[0].friendlyName = "Input 1";
+            inputParams[0].name = "input1";
+            inputParams[0].type = ParameterType::Value;
+        }
+        
+        outputParams[0].isActive = true;
+        outputParams[0].friendlyName = "Out";
+        outputParams[0].type = ParameterType::Value;
+        
+        expression.register_symbol_table(symbol_table);
+        
+        updateExpressionString("input1 ^ 2");
+        updateSymbolTable();
+    };
+    
+    void updateSymbolTable()
+    {
+        symbol_table.clear();
+        
+        for (int i = 0; i < NUM_PARAMS; i++)
+        {
+            if (!inputParams[i].isActive) break;
+            
+            symbol_table.add_variable(inputParams[i].name.toStdString(), inputs[i]);
+        }
+        
+        parser.compile(expression_string, expression);
+    }
+    
+    void updateExpressionString()
+    {
+        parser.compile(expression_string, expression);
+    }
+    
+    void updateExpressionString(juce::String new_expr)
+    {
+        expression_string = new_expr.toStdString();
+        updateExpressionString();
+    }
+    
+    float getValue()
+    {
+        return expression.value();
+    }
+    
+    NodeType getType() {return NodeType::Maths;}
+    Node* getCopy() {return new MathsNode(*this);}
+    
+    exprtk::symbol_table<float> symbol_table;
+    exprtk::parser<float> parser;
+    exprtk::expression<float> expression;
+    
+    float inputs[NUM_PARAMS];
+    std::string expression_string;
     
     static const Node::Defaults defaults;
 };
@@ -701,7 +785,10 @@ struct DataInstance
                         break;
                     case NodeType::Loudness:
                         nodes[nodeId++] = new Data::LoudnessNode(child);
-                        
+                        break;
+                    case NodeType::Maths:
+                        nodes[nodeId++] = new Data::MathsNode(child);
+                        break;
                 }
                 
             } else if (child->getTagName() == "valueStream")
@@ -724,11 +811,11 @@ struct DataInstance
     
     ~DataInstance()
     {
-        DBG("Destruction of DataInstance ("<< i << ") called");
+//        DBG("Destruction of DataInstance ("<< i << ") called");
         
         for (int i = 0; i < NUM_NODES; i++) // manual construction because im being naughty and using raw pointers
         {
-            DBG("Destroying node " << i << " (" << (nodes[i] == nullptr ? -1 : nodes[i]->getType()) << ")");
+//            DBG("Destroying node " << i << " (" << (nodes[i] == nullptr ? -1 : nodes[i]->getType()) << ")");
             delete nodes[i];
         }
     }

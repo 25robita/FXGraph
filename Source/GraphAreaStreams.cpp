@@ -328,7 +328,7 @@ void GraphAreaStreams::handleDragStreamEnd(juce::Point<float> position)
                 
                 dataManager->finishEditing();
                 
-                DBG("we've finished");
+//                DBG("we've finished");
                                 
                 repaint();
             }
@@ -373,7 +373,7 @@ void GraphAreaStreams::handleDragStreamEnd(juce::Point<float> position)
                 
                 dataManager->finishEditing();
                 
-                DBG("we've finished");
+//                DBG("we've finished");
                                 
                 repaint();
             }
