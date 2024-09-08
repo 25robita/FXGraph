@@ -62,7 +62,7 @@ private:
     
     juce::Path* createStream(juce::Array<juce::Point<float>> anchorPoints);
     void paintStream(juce::Graphics& g, Data::Stream stream);
-    Stream* paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type);
+    Stream* paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type, bool addStream = true);
     juce::Rectangle<float> getStreamRectangle(Direction direction, juce::Point<float> start, juce::Point<float> end, float thickness);
     
     juce::OwnedArray<Common::Node>& graphNodes;

@@ -165,10 +165,15 @@ void ParamTable_Model::handleInput(int column, int row, const juce::String &newV
     }
     
     dataManager->registerOneTimeRealisationListener([this] () { // FIXME: this doesn't actually update the table cells
-        table.updateContent();
-        table.repaint();
+//        if (this == nullptr) return; // maybe this will fix it
+//        if (table.getTableListBoxModel() == nullptr) return;
+//        
+//        table.updateContent();
+//        table.repaint();
+//        
+//        getParentComponent()->getParentComponent()->resized();
         
-        getParentComponent()->getParentComponent()->resized();
+        // this is breaking stuff right now and its not necessary
     });
 }
 

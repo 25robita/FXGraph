@@ -12,14 +12,10 @@
 #include "DataManager.h"
 #include "SideMenu.h"
 
-static std::unique_ptr<FXGraphAudioProcessor> globalProcessorPointer; // so very debug
-
 //==============================================================================
 FXGraphAudioProcessorEditor::FXGraphAudioProcessorEditor (FXGraphAudioProcessor& p, std::shared_ptr<DataManager> d)
 : AudioProcessorEditor (&p), audioProcessor (p), m_sideMenu(d), m_graphAreaStreams(graphNodes, d)
 {
-    globalProcessorPointer.reset(&p);
-    
     dataManager = d;
     
     std::function<void()> a = [this] () {

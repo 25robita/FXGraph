@@ -116,7 +116,7 @@ juce::Path* GraphAreaStreams::createStream(juce::Array<juce::Point<float>> ancho
     return out;
 }
 
-GraphAreaStreams::Stream* GraphAreaStreams::paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type)
+GraphAreaStreams::Stream* GraphAreaStreams::paintStreamInternal(juce::Graphics& g, juce::Point<float> startPosition, juce::Point<float> endPosition, ParameterType type, bool addStream)
 {
     auto streamEl = new Stream;
     
@@ -145,7 +145,8 @@ GraphAreaStreams::Stream* GraphAreaStreams::paintStreamInternal(juce::Graphics& 
     
     g.fillPath(*streamEl->path.get());
     
-    streams.add(streamEl);
+    if (addStream)
+        streams.add(streamEl);
     
     return streamEl;
 }
@@ -202,7 +203,9 @@ void GraphAreaStreams::paint (juce::Graphics& g)
     
     if (dragStreamNodeId != -1)
     {
-        paintStreamInternal(g, dragStreamOrigin, dragStreamEndpoint, dragStreamType);
+        auto s = paintStreamInternal(g, dragStreamOrigin, dragStreamEndpoint, dragStreamType, false);
+        
+        delete s;
     }
 }
 
@@ -218,12 +221,14 @@ void GraphAreaStreams::mouseDown(const juce::MouseEvent &event)
     // get clicked stream
     Stream* stream;
     for (auto s : streams) {
-        if (s->path->contains(event.getPosition().toFloat()))
+        if (s->streamId != -1 && s->path->contains(event.getPosition().toFloat()))
         {
             stream = s;
             break;
         }
     }
+    
+    if (stream == nullptr) return;
     
     // give to parent to handle
     handleSelectStream(stream->type, stream->streamId);
